@@ -1,0 +1,53 @@
+body {
+    margin: 0;
+    background: black;
+    overflow: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#verticalButtons {
+    display: flex;
+    flex-direction: column;
+    padding-left: 1rem;
+    padding-right: 1rem;
+}
+
+#verticalButtons span,
+#verticalButtons label {
+    border: none;
+    border-radius: 15px;
+    padding: 6px 6px 8px 6px;
+    margin: 5px;
+    cursor: pointer;
+    background: white;
+}
+
+#btnSave:hover {
+    background: lightgreen;
+}
+
+#btnDel:hover {
+    background: indianred;
+}
+
+#btnExport:hover {
+    background: lightblue;
+}
+
+#btnImport {
+    display: none;
+}
+
+#btnImportLbl:hover {
+    background: lightyellow;
+}
+
+#NNCanvas {
+    background: darkgrey;
+}
+
+#roadCanvas {
+    background: lightgray;
+}
