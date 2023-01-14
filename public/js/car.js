@@ -39,6 +39,7 @@ class Car {
             this.sensor = new Sensor(this);
             this.brain = new NeuralNetwork([this.sensor.rayCount, 6, 4]);
         } else if (controlType == "MANUAL") {
+            // Removed the brain on Manual
             this.sensor = new Sensor(this);
         }
 

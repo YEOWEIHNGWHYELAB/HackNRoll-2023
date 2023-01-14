@@ -7,6 +7,8 @@ class Sensor {
         this.rayLength = 150;
         this.raySpread = Math.PI / 2;
 
+        // The ray are the sensor rays shining out from the car
+        // Readings are the readings from the sensor from 0 - 1
         this.rays = [];
         this.readings = [];
     }
