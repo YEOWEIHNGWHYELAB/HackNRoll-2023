@@ -11,16 +11,16 @@ class Sensor {
         this.readings = [];
     }
 
-    update(roadBorders, traffic) {
+    update(roadBorders, traffic, agentTraffic) {
         this.#castRays();
         this.readings = [];
 
         for (let i = 0; i < this.rays.length; i++) {
-            this.readings.push(this.#getReading(this.rays[i], roadBorders, traffic));
+            this.readings.push(this.#getReading(this.rays[i], roadBorders, traffic, agentTraffic));
         }
     }
 
-    #getReading(ray, roadBorders, traffic) {
+    #getReading(ray, roadBorders, traffic, agentTraffic) {
         let touches = [];
 
         // Sensor collision with road border
@@ -35,6 +35,19 @@ class Sensor {
         // Sensor collision with traffic NPC
         for (let i = 0; i < traffic.length; i++) {
             const poly = traffic[i].polygon;
+
+            for (let j = 0; j < poly.length; j++) {
+                const value = getIntersection(ray[0], ray[1], poly[j], poly[(j + 1) % poly.length]);
+
+                if (value) {
+                    touches.push(value);
+                }
+            }
+        }
+
+        // Sensor collision with traffic Agents
+        for (let i = 0; i < agentTraffic.length; i++) {
+            const poly = agentTraffic[i].polygon;
 
             for (let j = 0; j < poly.length; j++) {
                 const value = getIntersection(ray[0], ray[1], poly[j], poly[(j + 1) % poly.length]);

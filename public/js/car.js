@@ -1,5 +1,4 @@
 class Car {
-
     /**
      * 
      * @param {number} x 
@@ -10,7 +9,7 @@ class Car {
      * @param {number} maxSpeed 
      * @param {string} color 
      */
-    constructor(x, y, width, height, controlType, maxSpeed = 3, color = "blue") {
+    constructor(x, y, width, height, controlType, username = "", maxSpeed = 3, color = "blue") {
         /**
          * Where to draw the car and the size
          */
@@ -34,11 +33,17 @@ class Car {
         this.polygon;
 
         /**
-         * Only add sensor and neural network to car if it is not "NPC"
+         * Only add sensor to Agent (Best Choosen)
          */
         if (controlType == "AI") {
             this.sensor = new Sensor(this);
             this.brain = new NeuralNetwork([this.sensor.rayCount, 6, 4]);
+        } else if (controlType == "MANUAL") {
+            this.sensor = new Sensor(this);
+        }
+
+        if (controlType == "NPCAgent") {
+            this.username = username;
         }
 
         /**
@@ -60,17 +65,17 @@ class Car {
         };
     }
 
-    update(roadBorders, trafficNPC) {
+    update(roadBorders, trafficNPC, agentTraffic) {
         // Car can only move if it is not damage
         if (!this.damaged) {
             this.#move();
 
-            this.polygon = this.#draw_polygon();
-            this.damaged = this.#check_damage(roadBorders, trafficNPC);
+            this.polygon = this.#drawPolygon();
+            this.damaged = this.#checkDamage(roadBorders, trafficNPC, agentTraffic);
         }
 
         if (this.sensor) {
-            this.sensor.update(roadBorders, trafficNPC);
+            this.sensor.update(roadBorders, trafficNPC, agentTraffic);
 
             // Array of offset showing the values of sensor
             // 0 -> Far, value increases showing obstacle closer to car
@@ -78,7 +83,9 @@ class Car {
                 s == null ? 0 : 1 - s.offset
             );
 
-            const outputs = NeuralNetwork.feedForward(offsets, this.brain);
+            if (this.brain) {
+                const outputs = NeuralNetwork.feedForward(offsets, this.brain);
+            }
 
             // Control the car using neural network
             if (this.useBrain) {
@@ -90,33 +97,37 @@ class Car {
         }
     }
 
-    /**
-     * To check for damage, we have to check against the road border and the 
-     * NPC which are the only obstacles that the car can collide with
-     *  
-     * @param {*} roadBorders 
-     * @param {*} trafficNPC 
-     * @returns boolean on whether did the car get damage
-     */
-    #check_damage(roadBorders, trafficNPC) {
-        // Iteratively check if any polygons intersects
-
-        for (let i = 0; i < roadBorders.length; i++) {
-            if (polygonIntersect(this.polygon, roadBorders[i])) {
-                return true;
-            }
-        }
-
-        for (let i = 0; i < trafficNPC.length; i++) {
-            if (polygonIntersect(this.polygon, trafficNPC[i].polygon)) {
-                return true;
+    // Iteratively check if any polygons intersects
+    #polyIntersectCheck(polygonToCheck) {
+        for (let i = 0; i < polygonToCheck.length; i++) {
+            if (polygonToCheck[i].polygon) {
+                if (polygonIntersect(this.polygon, polygonToCheck[i].polygon)) {
+                    return true;
+                }
+            } else {
+                if (polygonIntersect(this.polygon, polygonToCheck[i])) {
+                    return true;
+                }
             }
         }
 
         return false;
     }
 
-    #draw_polygon() {
+    /**
+     * To check for damage, we have to check against the road border and the 
+     * NPC which are the only obstacles that the car can collide with
+     *  
+     * @param {*} roadBorders 
+     * @param {*} trafficNPC 
+     * @param {*} agentTraffic 
+     * @returns boolean on whether did the car get damage
+     */
+    #checkDamage(roadBorders, trafficNPC, agentTraffic) {
+        return (this.#polyIntersectCheck(roadBorders) || this.#polyIntersectCheck(trafficNPC) || this.#polyIntersectCheck(agentTraffic));
+    }
+
+    #drawPolygon() {
         const points = [];
 
         const rad = Math.hypot(this.width, this.height) / 2;
@@ -191,6 +202,17 @@ class Car {
         // Translate the center of the car
         this.x -= Math.sin(this.angle) * this.speed;
         this.y -= Math.cos(this.angle) * this.speed;
+    }
+
+    agentTrafficUpdate (agentData) {
+        if (agentData["x"])
+            this.x = agentData["x"];
+        
+        if (agentData["y"])
+            this.y = agentData["y"];
+        
+        if (agentData["a"])
+            this.angle = agentData["a"];
     }
 
     // Draw car & Sensor

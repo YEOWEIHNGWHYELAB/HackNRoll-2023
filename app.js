@@ -1,5 +1,5 @@
+const socket = require("./socket");
 require("dotenv").config();
-
 const express = require("express");
 const app = express();
 const cookieParser = require("cookie-parser");
@@ -8,6 +8,8 @@ const io = require("socket.io")(http);
 const port = 8083;
 
 const routes = require("./routes");
+
+var usersOnline = [];
 
 // initialise db
 const db = require("./db");
@@ -22,13 +24,10 @@ app.use(cookieParser());
 app.use(routes.pages);
 app.use(routes.user);
 
-io.on("connection", (socket) => {
-    // handshake.headers[x-forwarded-for] for public IP if available
-    // conn.remoteAddress for private IP
-    let clientIP = socket.handshake.headers["x-forwarded-for"] || socket.conn.remoteAddress.split(":")[3];
-    console.log(`User from ${clientIP} connected`);
-});
+// Socket Handling
+socket.socketHandling(io, app, usersOnline);
 
+// Server Initialization
 http.listen(port, () => {
     console.log(`Server running at port ${port}`);
 });

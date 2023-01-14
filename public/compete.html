@@ -3,12 +3,43 @@
 
 <head>
     <title>Hack&Roll 2023</title>
+    <link rel="stylesheet" href="/css/train.css">
     <meta name="description" content="Our Hack&Roll 2023 Project | Competition">
     <script src="js/socket.io.min.js"></script>
+    <script src="js/training-env.js"></script>
     <script src="js/compete.main.js"></script>
+    <script src="js/socket-handler.js"></script>
+    <script src="js/visualizer.js"></script>
+    <script src="js/network.js"></script>
+    <script src="js/sensor.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/road.js"></script>
+    <script src="js/controls.js"></script>
+    <script src="js/car.js"></script>
+    <script src="js/storage.js"></script>
 </head>
 
 <body>
+    <canvas id="roadCanvas"></canvas>
+
+    <div id="verticalButtons">
+        <span id="btnSave" onclick="saveBrain()">💾</span>
+        <span id="btnDel" onclick="discardBrain()">🗑️</span>
+        <span id="btnReset" onclick="resetTraining(false)">🔁</span>
+        <span id="btnExport" onclick="exportBrain()">📥</span>
+        <input type="file" id="btnImport" onchange="importBrain(event)" />
+        <label for="btnImport" id="btnImportLbl">📤</label>
+    </div>
+
+    <canvas id="NNCanvas"></canvas>
+
+    <div id="divPopup">
+        <div id="txtPopup">All agents have stopped, save previous best model?</div>
+        <div id="continueContainer">
+            <span class="btn-continue" id="btnContinueSave" onclick="resetTraining(true)">Save</span>
+            <span class="btn-continue" id="btnContinueNoSave" onclick="resetTraining(false)">Do not Save</span>
+        </div>
+    </div>
 </body>
 
 </html>

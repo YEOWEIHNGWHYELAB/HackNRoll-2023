@@ -2,13 +2,22 @@ const bcrypt = require("bcrypt");
 const Pool = require("pg").Pool;
 
 const saltRounds = 10;
+let dbusername = "postgres";
+let dbpassword = "password";
+let dbname = "hacknroll";
+
+if (process.env.DBUSERNAME && process.env.DBPASSWORD && process.env.DBNAME) {
+    dbusername = process.env.DBUSERNAME.toString();
+    dbpassword = process.env.DBPASSWORD.toString();
+    dbname = process.env.DBNAME.toString();
+}
 
 const pool = new Pool({
-    user: "postgres",
-    password: "password",
+    user: dbusername,
+    password: dbpassword,
     host: "localhost",
     port: 5432,
-    database: "hacknroll",
+    database: dbname,
 });
 
 /**
@@ -27,7 +36,6 @@ const runQuery = async (query, values, onSuccess = undefined, onError = undefine
         }
     });
 };
-
 
 /**
  * Initialises database with schemas if they don't already exist

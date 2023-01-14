@@ -29,6 +29,9 @@ router.post("/login", (req, res) => {
 
                 // keep login for a week
                 res.cookie("jwtLogin", token, { maxAge: 7 * 24 * 60 * 60 * 1000 })
+
+                // set username
+                res.cookie("username", username, { maxAge: 7 * 24 * 60 * 60 * 1000 })
                     .json({ "success": true });
             }
             else
