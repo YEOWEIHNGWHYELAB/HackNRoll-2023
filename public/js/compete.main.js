@@ -1,4 +1,3 @@
-let agentOnline = [];
 let roomID;
 
 function getCookie(cname) {
@@ -46,6 +45,6 @@ window.onload = () => {
     joinRoom(roomID, getCookie("username"));
     emitNew(getCookie("username"));
     initGlobals();
-    resetCanvas(1, true);
+    resetCanvas(1);
     animate();
 };

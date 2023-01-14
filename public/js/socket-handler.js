@@ -37,8 +37,9 @@ socket.on("agent_refresh", function (users) {
     }
 });
 
+// Removes agent from memory when they disconnect
 socket.on("agent_left", function (username) {
-    console.log(username + " has left");
+    agentTraffic = agentTraffic.filter((a) => a.username !== username);
 });
 
 // Gets emitted data of other agents and updates environment
@@ -52,18 +53,43 @@ socket.on("agent_data", function (data) {
     }
 });
 
+socket.on("ended", showScores);
+
 socket.on("init_traffic", spawnTraffic);
 socket.on("new_traffic", spawnTraffic);
 
 /**
  * 
- * @param {Array<Array<number>>} trafficArr 
+ * @param {object} trafficInfo
  */
-function spawnTraffic(trafficArr) {
+function spawnTraffic(trafficInfo) {
+    const trafficOffset = trafficInfo["trafficOffset"];
+    const trafficArr = trafficInfo["traffic"];
+
     for (npc of trafficArr) {
         let x = road.getLaneCenter(npc[0]),
-            y = npc[1],
+            y = npc[1] + trafficOffset,
             car = new Car(x, y, 30, 50, "NPC", "", 1, getRandomColor());
         traffic.push(car);
     }
+}
+
+function showScores(scores) {
+    const divScores = document.querySelector("#divScores"),
+        tblScores = document.querySelector("#tblScores");
+
+    tblScores.innerHTML = "";
+    for (user in scores) {
+        let newRow = tblScores.insertRow(0),
+            nameCell = newRow.insertCell(0),
+            scoreCell = newRow.insertCell(1);
+
+        nameCell.innerHTML = user;
+        scoreCell.innerHTML = scores[user];
+    }
+
+    divScores.style.display = "block";
+    setTimeout(function () {
+        divScores.style.opacity = 1;
+    }, 100);
 }

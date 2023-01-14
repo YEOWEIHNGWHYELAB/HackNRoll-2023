@@ -3,14 +3,10 @@ let NNCanvas;
 let roadCtx;
 let NNCtx;
 let road;
-let agentNum;
 let agentArr;
 let bestCar;
-let prevBestCar;
-let timeSinceBestChange;
 let traffic;
 let agentTraffic;
-let popup;
 let running;
 
 const initGlobals = () => {
@@ -25,23 +21,14 @@ const initGlobals = () => {
     roadCtx = roadCanvas.getContext("2d");
     NNCtx = NNCanvas.getContext("2d");
 
-    popup = document.querySelector("#divPopup");
     running = true;
 };
 
-const resetCanvas = (agentCount = 10, isMultiplayerCar = false) => {
-    popup.style.display = "none";
-    popup.style.opacity = 0;
-
+const resetCanvas = () => {
     road = new Road(roadCanvas.width / 2, roadCanvas.width * 0.9, 4);
 
     // Agent Generation
-    agentNum = agentCount;
-    if (isMultiplayerCar) {
-        agentArr = generateMyAgent(1);
-    } else {
-        agentArr = generateCars(agentNum);
-    }
+    agentArr = generateMyAgent(1);
 
     bestCar = agentArr[0];
 
@@ -80,60 +67,10 @@ const generateCars = (N) => {
     return cars;
 };
 
-const generateMyAgent = (N) => {
-    let cars = [];
-
-    // Initialize all the agents
-    for (let i = 1; i <= N; i++) {
-        cars.push(new Car(road.getLaneCenter(2), 0, 30, 50, "AI"));
-    }
-
+const generateMyAgent = () => {
+    let cars = [new Car(road.getLaneCenter(2), 0, 30, 50, "AI")];
     return cars;
 };
-
-/**
- * Resets the canvas, for a next round of training
- * @param {boolean} saveBest Flag whether to save the best agent for the current session
- */
-const resetTraining = (saveBest) => {
-    if (saveBest)
-        saveBrain();
-
-    resetCanvas();
-};
-
-/**
- * Shows popup when all agents have stopped
- */
-const showPopup = () => {
-    running = false;
-    popup.style.display = "block";
-    setTimeout(function () {
-        popup.style.opacity = 1;
-    }, 100);
-};
-
-function trafficNPCController() {
-    // Compare best car with last NPC car
-    let lastNPC = traffic[traffic.length - 1];
-    let distDiff = bestCar.y - lastNPC.y;
-
-    // If the distance is close enough, generate a new NPC car
-    if (distDiff <= road.yDistThreshold) {
-        let l1 = road.getRandomLaneCenter();
-        let l2 = road.getRandomLaneCenter();
-
-        while (l2 == l1) {
-            l2 = road.getRandomLaneCenter();
-        }
-
-        traffic.push(new Car(l1, lastNPC.y - 200, 30, 50, "NPC", "", 2, getRandomColor()));
-        traffic.push(new Car(l2, lastNPC.y - 200, 30, 50, "NPC", "", 2, getRandomColor()));
-
-        // Remove first 2 to reduce traffic processing
-        traffic.slice(2);
-    }
-}
 
 function envUpdate(time, isSinglePlayer) {
     for (let i = 0; i < traffic.length; i++) {
@@ -152,7 +89,9 @@ function envUpdate(time, isSinglePlayer) {
     // if all cars have stopped
     let stopCond = agentArr.every((agent) => agent.damaged);
     if (stopCond) {
-        showPopup();
+        if (running)
+            socket.emit("crash", "");
+        running = false;
     }
 
     roadCanvas.height = window.innerHeight;

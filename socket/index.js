@@ -1,3 +1,5 @@
+const db = require("../db");
+
 const TRAFFIC_GEN_THRESHOLD = 800;
 const TRAFFIC_Y_GAP = 200;
 
@@ -8,7 +10,7 @@ let roomInfo = {};
 setInterval(() => {
     for (const roomID in roomInfo) {
         if (roomInfo[roomID]["traffic"].length > 1) {
-            roomInfo[roomID]["traffic"][roomInfo[roomID]["traffic"].length - 1][1] -= 1;
+            roomInfo[roomID]["trafficOffset"] -= 1;
         }
     }
 }, 8.33);
@@ -27,6 +29,8 @@ function socketHandling(io) {
                 removeUserFromRoom(roomID, username);
                 socket.leave(userRoomMap.get(sessionID));
                 userRoomMap.delete(sessionID);
+
+                io.to(roomID).emit("agent_left", username);
             } catch (e) {
                 console.log("[error]", "leave room :", e);
                 socket.emit("error", "couldnt perform requested action");
@@ -55,7 +59,10 @@ function socketHandling(io) {
                     socket.join(roomID);
                     userRoomMap.set(sessionID, roomID);
                     io.to(roomID).emit("agent_refresh", roomInfo[roomID]["users"]);
-                    io.to(roomID).emit("init_traffic", roomInfo[roomID]["traffic"]);
+                    socket.emit("init_traffic", {
+                        traffic: roomInfo[roomID]["traffic"],
+                        trafficOffset: roomInfo[roomID]["trafficOffset"],
+                    });
                 } else {
                     throw new Error("Room is currently full");
                 }
@@ -72,7 +79,55 @@ function socketHandling(io) {
                 handleAgentMovement(io, roomID, msg);
             socket.to(roomID).emit("agent_data", msg);
         });
+
+        socket.on("crash", () => {
+            let roomID = userRoomMap.get(sessionID),
+                username = socketUserMap.get(sessionID);
+
+            if (roomID in roomInfo) {
+                roomInfo[roomID]["agents"][username]["crashed"] = true;
+
+                if (checkGameEnded(roomID)) {
+                    const scores = getFinalScores(roomID);
+                    io.to(roomID).emit("ended", scores);
+                    delete roomInfo[roomID];
+                    console.log(`Game in room '${roomID}' has ended`);
+                }
+            }
+        });
     });
+}
+
+
+/**
+ * Checks whether all agents in a room have crashed
+ * @param {string} roomID 
+ * @returns {boolean} Flag whether game has ended
+ */
+function checkGameEnded(roomID) {
+    const agents = roomInfo[roomID]["agents"];
+    for (user in agents) {
+        if (agents[user]["crashed"] === false)
+            return false;
+    }
+    return true;
+}
+
+/**
+ * Checks whether all agents in a room have crashed
+ * @param {string} roomID 
+ * @returns {object} All scores of the users
+ */
+function getFinalScores(roomID) {
+    let scores = {};
+    let agents = roomInfo[roomID]["agents"];
+
+    for (user in agents) {
+        scores[user] = Math.abs(Math.round(agents[user]["pos"][1]));
+    }
+
+    db.uploadScores(roomID, agents);
+    return scores;
 }
 
 
@@ -82,12 +137,23 @@ function socketHandling(io) {
  * @param {Object} msg Object containing keys "username" and "agentData"
  */
 function handleAgentMovement(io, roomID, msg) {
+    if ((roomID in roomInfo) === false)
+        return;
+
     let username = msg["username"];
-    roomInfo[roomID]["agents"][username] = [msg["agentData"]["x"], msg["agentData"]["y"]];
+    if ((username in roomInfo[roomID]["agents"]) === false)
+        return;
+
+    roomInfo[roomID]["agents"][username]["pos"] = [msg["agentData"]["x"], msg["agentData"]["y"]];
 
     let newTraffic = generateTraffic(roomID, 2);
-    if (newTraffic.length > 0)
-        io.to(roomID).emit("new_traffic", newTraffic);
+    if (newTraffic.length > 0) {
+        io.to(roomID).emit("new_traffic", {
+            traffic: newTraffic,
+            trafficOffset: roomInfo[roomID]["trafficOffset"],
+        });
+    }
+
 }
 
 
@@ -106,13 +172,17 @@ function addUserToRoom(roomID, username) {
             "agents": {},
             "laneCount": 4,
             "traffic": [],
+            "trafficOffset": 0,
         };
     }
 
     if (roomInfo[roomID]["userCount"] < roomInfo[roomID]["laneCount"]) {
         roomInfo[roomID]["userCount"]++;
         roomInfo[roomID]["users"].push(username);
-        roomInfo[roomID]["agents"][username] = [0, 0];
+        roomInfo[roomID]["agents"][username] = {
+            "pos": [0, 0],
+            "crashed": false,
+        };
         return true;
     } else {
         return false;
@@ -146,11 +216,11 @@ function removeUserFromRoom(roomID, username) {
 function generateTraffic(roomID, count = 2) {
     let newTraffic = [];
 
-    const agents = roomInfo[roomID]["agents"];
+    const agentPos = Object.values(roomInfo[roomID]["agents"]).map((v) => v["pos"]);
     const traffic = roomInfo[roomID]["traffic"];
     const lastTrafficY = (traffic.length > 0) ? traffic[traffic.length - 1][1] : -100;
 
-    let agentY = Object.values(agents).map(pos => pos[1]),
+    let agentY = Object.values(agentPos).map(pos => pos[1]),
         minY = Math.min(...agentY);
 
     // Compare best car with last NPC car

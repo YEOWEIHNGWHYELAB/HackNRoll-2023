@@ -3,7 +3,7 @@
 
 <head>
     <title>Hack&Roll 2023</title>
-    <link rel="stylesheet" href="/css/train.css">
+    <link rel="stylesheet" href="/css/compete.css">
     <meta name="description" content="Our Hack&Roll 2023 Project | Competition">
     <script src="js/socket.io.min.js"></script>
     <script src="js/visualizer.js"></script>
@@ -14,7 +14,7 @@
     <script src="js/controls.js"></script>
     <script src="js/car.js"></script>
     <script src="js/storage.js"></script>
-    <script src="js/training-env.js"></script>
+    <script src="js/compete-env.js"></script>
     <script src="js/socket-handler.js"></script>
     <script src="js/compete.main.js"></script>
 </head>
@@ -33,11 +33,11 @@
 
     <canvas id="NNCanvas"></canvas>
 
-    <div id="divPopup">
-        <div id="txtPopup">All agents have stopped, save previous best model?</div>
-        <div id="continueContainer">
-            <span class="btn-continue" id="btnContinueSave" onclick="resetTraining(true)">Save</span>
-            <span class="btn-continue" id="btnContinueNoSave" onclick="resetTraining(false)">Do not Save</span>
+    <div id="divScores">
+        <div id="txtPopup">All agents have stopped, game has ended</div>
+        <div id="divScoreboard">
+            <table id="tblScores">
+            </table>
         </div>
     </div>
 </body>

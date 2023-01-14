@@ -43,7 +43,7 @@ const runQuery = async (query, values, onSuccess = undefined, onError = undefine
 const initDB = () => {
     let schemaDDL = `
         CREATE SCHEMA IF NOT EXISTS "2023";`;
-    runQuery(schemaDDL, [], undefined, undefined);
+    runQuery(schemaDDL, []);
 
     let userDDL = `
         CREATE TABLE IF NOT EXISTS "2023"."user" (
@@ -53,7 +53,21 @@ const initDB = () => {
             salt TEXT NOT NULL,
             PRIMARY KEY ("user_id")
         );`;
-    runQuery(userDDL, [], undefined, undefined);
+    runQuery(userDDL, []);
+
+    let scoreDDL = `
+        CREATE TABLE IF NOT EXISTS "2023"."score" (
+            score_id INT GENERATED ALWAYS AS IDENTITY,
+            user_id INT NOT NULL,
+            username VARCHAR(20) NOT NULL,
+            score_value INT NOT NULL DEFAULT 0,
+            room_id VARCHAR(40) NOT NULL,
+            PRIMARY KEY ("score_id"),
+            CONSTRAINT fk_user_id
+                FOREIGN KEY("user_id")
+                    REFERENCES "2023"."user"("user_id")
+        );`;
+    runQuery(scoreDDL, []);
 };
 
 /**
@@ -111,6 +125,44 @@ const login = (username, password, onSuccess, onError) => {
     }, onError);
 };
 
+/**
+ * 
+ * @param {string} roomID Room ID of game that finished
+ * @param {object} agents Agent object, contains keys "pos" and "crashed"
+ */
+const uploadScores = (roomID, agents) => {
+    let queryDDLValues = [],
+        queryValues = [],
+        varCount = 0;
+
+    for (user in agents) {
+        const score = Math.abs(Math.round(agents[user]["pos"][1]));
+
+        queryDDLValues.push(`(
+            (SELECT user_id FROM "2023"."user" WHERE username=$${varCount + 1}),
+            $${varCount + 1},
+            $${varCount + 2},
+            $${varCount + 3}
+        )`);
+
+        queryValues.push(user);
+        queryValues.push(score);
+        queryValues.push(roomID);
+
+        // increment varCount as it's used for the $i variables
+        varCount += 3;
+    }
+
+    if (queryValues.length > 0) {
+        const scoreQuery = `
+            INSERT INTO "2023"."score"(
+                user_id, username, score_value, room_id
+            )
+            VALUES ${queryDDLValues.join(",")};`;
+        runQuery(scoreQuery, queryValues);
+    }
+};
+
 module.exports = {
-    initDB, register, login
+    initDB, register, login, uploadScores
 };
