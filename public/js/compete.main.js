@@ -1,16 +1,17 @@
 let x;
 let y;
 let a;
+let agentOnline;
 
 function getCookie(cname) {
     let name = cname + "=";
     let decodedCookie = decodeURIComponent(document.cookie);
-    let ca = decodedCookie.split(';');
+    let ca = decodedCookie.split(";");
 
     for(let i = 0; i <ca.length; i++) {
         let c = ca[i];
 
-        while (c.charAt(0) == ' ') {
+        while (c.charAt(0) == " ") {
             c = c.substring(1);
         }
 
@@ -28,25 +29,17 @@ function getCookie(cname) {
  */
 const animate = (time) => {
     // Update traffic NPC and agents
-    envUpdate(time);
+    envUpdate(time, false);
 
     data = {};
 
-    if (x != bestCar.x) {
-        x = bestCar.x;
-        data["x"] = x;
-    }
+    x = bestCar.x;
+    data["x"] = x;
+    y = bestCar.y;
+    data["y"] = y;
+    a = bestCar.angle;
+    data["a"] = a;
 
-    if (y != bestCar.y) {
-        y = bestCar.y;
-        data["y"] = y;
-    }
-
-    if (a != bestCar.angle) {
-        a = bestCar.angle;
-        data["a"] = a;
-    }
-    
     emitAgentData(getCookie("username"), data);
     
     if (running)
@@ -55,7 +48,8 @@ const animate = (time) => {
 
 window.onload = () => {
     emitNew(getCookie("username"));
+    // emitWhoseOnline(getCookie("username"));
     initGlobals();
-    resetCanvas(1);
+    resetCanvas(1, true);
     animate();
 };

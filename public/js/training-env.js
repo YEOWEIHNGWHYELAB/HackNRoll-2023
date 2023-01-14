@@ -29,7 +29,7 @@ const initGlobals = () => {
     running = true;
 };
 
-const resetCanvas = (agentCount = 10) => {
+const resetCanvas = (agentCount = 10, isMultiplayerCar = false) => {
     popup.style.display = "none";
     popup.style.opacity = 0;
 
@@ -37,7 +37,11 @@ const resetCanvas = (agentCount = 10) => {
 
     // Agent Generation
     agentNum = agentCount;
-    agentArr = generateCars(agentNum);
+    if (isMultiplayerCar) {
+        agentArr = generateMyAgent(agentNum, 0);
+    } else {
+        agentArr = generateCars(agentNum);
+    }
     bestCar = agentArr[0];
 
     // Check if there is already saved brain in local storage
@@ -53,16 +57,8 @@ const resetCanvas = (agentCount = 10) => {
         }
     }
 
-    // Traffic NPCs
-    traffic = [
-        new Car(road.getLaneCenter(1), -100, 30, 50, "NPC", "", 2, getRandomColor()),
-        new Car(road.getLaneCenter(3), -100, 30, 50, "NPC", "", 2, getRandomColor()),
-        new Car(road.getLaneCenter(0), -300, 30, 50, "NPC", "", 2, getRandomColor()),
-        new Car(road.getLaneCenter(1), -300, 30, 50, "NPC", "", 2, getRandomColor()),
-        new Car(road.getLaneCenter(2), -300, 30, 50, "NPC", "", 2, getRandomColor()),
-        new Car(road.getLaneCenter(3), -500, 30, 50, "NPC", "", 2, getRandomColor()),
-    ];
-
+    // Traffic NPCs & Other Agent Traffic
+    traffic = [];
     agentTraffic = [];
 };
 
@@ -83,6 +79,17 @@ const generateCars = (N) => {
     return cars;
 };
 
+const generateMyAgent = (N, laneNum) => {
+    let cars = [];
+
+    // Initialize all the agents
+    for (let i = 1; i <= N; i++) {
+        cars.push(new Car(road.getLaneCenter(2), 100, 30, 50, "MANUAL"));
+    }
+    
+    return cars;
+};
+
 /**
  * Resets the canvas, for a next round of training
  * @param {boolean} saveBest Flag whether to save the best agent for the current session
@@ -90,6 +97,7 @@ const generateCars = (N) => {
 const resetTraining = (saveBest) => {
     if (saveBest)
         saveBrain();
+
     resetCanvas();
 };
 
@@ -104,7 +112,29 @@ const showPopup = () => {
     }, 100);
 };
 
-function envUpdate(time) {
+function trafficNPCController() {
+    // Compare best car with last NPC car
+    let lastNPC = traffic[traffic.length - 1];
+    let distDiff = bestCar.y - lastNPC.y;
+    
+    // If the distance is close enough, generate a new NPC car
+    if (distDiff <= road.yDistThreshold) {
+        let l1 = road.getRandomLaneCenter();
+        let l2 = road.getRandomLaneCenter();
+
+        while (l2 == l1) {
+            l2 = road.getRandomLaneCenter();
+        }
+
+        traffic.push(new Car(l1, lastNPC.y - 200, 30, 50, "NPC", "", 2, getRandomColor()));
+        traffic.push(new Car(l2, lastNPC.y - 200, 30, 50, "NPC", "", 2, getRandomColor()));
+
+        // Remove first 2 to reduce traffic processing
+        traffic.slice(2);
+    }
+}
+
+function envUpdate(time, clientControlNPC) {
     for (let i = 0; i < traffic.length; i++) {
         traffic[i].update(road.borders, [], []);
     }
@@ -153,25 +183,8 @@ function envUpdate(time) {
     roadCtx.globalAlpha = 1;
     bestCar.draw(roadCtx, true);
 
-    // Compare best car with last NPC car
-    let lastNPC = traffic[traffic.length - 1];
-    let distDiff = bestCar.y - lastNPC.y;
-
-    // If the distance is close enough, generate a new NPC car
-    if (distDiff <= road.yDistThreshold) {
-        let l1 = road.getRandomLaneCenter();
-        let l2 = road.getRandomLaneCenter();
-
-        while (l2 == l1) {
-            l2 = road.getRandomLaneCenter();
-        }
-
-        traffic.push(new Car(l1, lastNPC.y - 200, 30, 50, "", "NPC", 2, getRandomColor()));
-        traffic.push(new Car(l2, lastNPC.y - 200, 30, 50, "", "NPC", 2, getRandomColor()));
-
-        // Remove first 2 to reduce traffic processing
-        traffic.slice(2);
-    }
+    if (clientControlNPC)
+        trafficNPCController();
 
     roadCtx.restore();
 
@@ -181,4 +194,3 @@ function envUpdate(time) {
         Visualizer.drawNetwork(NNCtx, bestCar.brain);
     }
 }
-
