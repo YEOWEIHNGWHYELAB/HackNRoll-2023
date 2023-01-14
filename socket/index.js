@@ -1,4 +1,5 @@
 const db = require("../db");
+const spawn = require("child_process").spawn;
 
 const TRAFFIC_GEN_THRESHOLD = 800;
 const TRAFFIC_Y_GAP = 200;
@@ -18,6 +19,12 @@ setInterval(() => {
 function socketHandling(io) {
     io.on("connection", (socket) => {
         const socketID = socket.id;
+
+        let pythonProcess = spawn("python", ["-u", "./python/controller.py"]);
+        
+        pythonProcess.stdout.on("data", (data) => {
+            io.to(socketID).emit("agent_action", data.toString().trim());
+        });
 
         // When a user disconnect, we send an icmp echo request so all the
         // clients that are still online is known
@@ -117,6 +124,10 @@ function socketHandling(io) {
         // On the receiving of chat message
         socket.on("chat_message", (msg) => {
             io.to(socketRoomMap.get(socketID)).emit("chat_message", socketUserMap.get(socketID), msg);
+        });
+
+        socket.on("agent_state_reward", (agentStringState) => {
+            pythonProcess.stdin.write(agentStringState + "\n");
         });
 
         socket.on("crash", async () => {

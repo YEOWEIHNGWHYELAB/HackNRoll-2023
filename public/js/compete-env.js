@@ -8,6 +8,9 @@ let bestCar;
 let traffic;
 let agentTraffic;
 let running;
+let roadMinX;
+let roadMaxX;
+let isUsingDQN = false;
 
 const initGlobals = (laneCount) => {
     // Window for Training Environment

@@ -12,6 +12,11 @@ let traffic;
 let agentTraffic;
 let popup;
 let running;
+let controlList = [false, false, false, false];
+let roadMinX;
+let roadMaxX;
+let isAwaitingDQNRes = true;
+let isUsingDQN = false;
 
 const initGlobals = (laneCount) => {
     // Window for Training Environment
@@ -108,6 +113,12 @@ function startEnv() {
     sensorLength = parseInt(urlParams.get("sensorLength"));
     sensorCount = parseInt(urlParams.get("sensorCount"));
     hiddenLayerCount = parseInt(urlParams.get("hiddenLayerCount"));
+    boolDQN = urlParams.get("dqnOn");
+
+    if (boolDQN === "true")
+        isUsingDQN = true;
+    else
+        isUsingDQN = false;
 
     if (!agentCount)
         agentCount = 10;
@@ -155,62 +166,105 @@ function trafficNPCController() {
 }
 
 function envUpdate(time, isSinglePlayer) {
-    for (let i = 0; i < traffic.length; i++) {
-        traffic[i].update(road.borders, [], []);
-    }
-    for (let i = 0; i < agentTraffic.length; i++) {
-        agentTraffic[i].update(road.borders, [], []);
-    }
-    for (let i = 0; i < agentArr.length; i++) {
-        agentArr[i].update(road.borders, traffic, agentTraffic);
-    }
+    if (isAwaitingDQNRes) {
+        if (isUsingDQN) {
+            isAwaitingDQNRes = false;
+        }
 
-    prevBestCar = bestCar;
-    bestCar = getBestAgent();
+        for (let i = 0; i < traffic.length; i++) {
+            traffic[i].update(road.borders, [], []);
+        }
+        for (let i = 0; i < agentTraffic.length; i++) {
+            agentTraffic[i].update(road.borders, [], []);
+        }
+        for (let i = 0; i < agentArr.length; i++) {
+            agentArr[i].update(road.borders, traffic, agentTraffic);
+        }
 
-    // if all cars have stopped
-    let stopCond = agentArr.every((agent) => agent.damaged);
-    if (stopCond) {
-        showPopup();
-    }
+        prevBestCar = bestCar;
+        bestCar = getBestAgent();
 
-    roadCanvas.height = window.innerHeight;
-    NNCanvas.height = window.innerHeight;
+        let sensorOffset = [];
+        for (singleSensor of bestCar.sensor.readings) {
+            if (singleSensor)
+                sensorOffset.push(singleSensor["offset"].toFixed(2));
+            else
+                sensorOffset.push(0);
+        }
+        
+        // Car Angle Normalization
+        let carAngle;
+        if (bestCar.angle % (2 * Math.PI) > Math.PI) {
+            carAngle = (bestCar.angle % (2 * Math.PI)) - (2 * Math.PI);
+        } else if (bestCar.angle % (2 * Math.PI) < -Math.PI) {
+            carAngle = (bestCar.angle % (2 * Math.PI)) + (2 * Math.PI);
+        } else {
+            carAngle = (bestCar.angle % (2 * Math.PI));
+        }
 
-    roadCtx.save();
+        // Reward Calculator
+        if (isUsingDQN) {
+            let reward;
+            if (!bestCar.realTimeCollision) {
+                let carAngleReward = ((Math.PI - Math.abs(carAngle)) / Math.PI) - 0.5; 
+                let carSpeed = bestCar.speed / 6.0;
+                reward = carAngleReward + carSpeed;
+            } else {
+                reward = -1;
+            }
 
-    // Move camera based on best car
-    roadCtx.translate(0, -bestCar.y + roadCanvas.height * 0.7);
+            // State to send
+            stringState = String(reward.toFixed(2)) + "," +
+                String((bestCar.speed / 2.95).toFixed(2)) + "," + 
+                String(carAngle.toFixed(2)) + "," +
+                String(sensorOffset);
+            carStateReward(stringState);
+        }
 
-    // Draw traffic NPCs
-    road.draw(roadCtx);
-    for (let i = 0; i < traffic.length; i++) {
-        traffic[i].draw(roadCtx);
-    }
+        // if all cars have stopped
+        let stopCond = agentArr.every((agent) => agent.damaged);
+        if (stopCond) {
+            showPopup();
+        }
 
-    // Draw Agent of another traffic
-    for (let i = 0; i < agentTraffic.length; i++) {
-        agentTraffic[i].draw(roadCtx);
-    }
+        roadCanvas.height = window.innerHeight;
+        NNCanvas.height = window.innerHeight;
 
-    // Draw all the agents that are not best to be lower in alpha value
-    roadCtx.globalAlpha = 0.2;
-    for (let i = 0; i < agentArr.length; i++) {
-        agentArr[i].draw(roadCtx);
-    }
+        roadCtx.save();
 
-    // Only draw the sensor and the clearest on the best car
-    roadCtx.globalAlpha = 1;
-    bestCar.draw(roadCtx, true);
+        // Move camera based on best car
+        roadCtx.translate(0, -bestCar.y + roadCanvas.height * 0.7);
 
-    if (isSinglePlayer)
-        trafficNPCController();
+        // Draw traffic NPCs
+        road.draw(roadCtx);
+        for (let i = 0; i < traffic.length; i++) {
+            traffic[i].draw(roadCtx);
+        }
 
-    roadCtx.restore();
+        // Draw Agent of another traffic
+        for (let i = 0; i < agentTraffic.length; i++) {
+            agentTraffic[i].draw(roadCtx);
+        }
 
-    // Neural network visualizer
-    if (bestCar.brain) {
-        NNCtx.lineDashOffset = -time / 50; // Make the line dash of the neural network visualizer move
-        Visualizer.drawNetwork(NNCtx, bestCar.brain);
+        // Draw all the agents that are not best to be lower in alpha value
+        roadCtx.globalAlpha = 0.2;
+        for (let i = 0; i < agentArr.length; i++) {
+            agentArr[i].draw(roadCtx);
+        }
+
+        // Only draw the sensor and the clearest on the best car
+        roadCtx.globalAlpha = 1;
+        bestCar.draw(roadCtx, true);
+
+        if (isSinglePlayer)
+            trafficNPCController();
+
+        roadCtx.restore();
+
+        // Neural network visualizer
+        if (bestCar.brain) {
+            NNCtx.lineDashOffset = -time / 50; // Make the line dash of the neural network visualizer move
+            Visualizer.drawNetwork(NNCtx, bestCar.brain);
+        }
     }
 }

@@ -15,8 +15,9 @@ const redirCompete = () => {
 
 const redirTrain = () => {
     let agentCount = document.querySelector("#agentCount").value;
+    let dqnOn = document.querySelector("#dqnOn").checked;
     let { laneCount, sensorLength, sensorSpread, sensorCount, hiddenLayerCount } = getParam();
-    window.location.href = `/train?laneCount=${laneCount}&agentCount=${agentCount}&sensorLength=${sensorLength}&sensorSpread=${sensorSpread}&sensorCount=${sensorCount}&hiddenLayerCount=${hiddenLayerCount}`;
+    window.location.href = `/train?laneCount=${laneCount}&agentCount=${agentCount}&sensorLength=${sensorLength}&sensorSpread=${sensorSpread}&sensorCount=${sensorCount}&hiddenLayerCount=${hiddenLayerCount}&dqnOn=${dqnOn}`;
 };
 
 const register = () => {

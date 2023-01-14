@@ -25,6 +25,16 @@
         <input type="number" id="hiddenLayerCount" placeholder="Hidden Layer Count">
         <br>
         <br>
+        <label>WARNING DO NOT CHECK THIS!! (ONLY FOR TESTING)</label>
+        <input type="checkbox" id="dqnOn" value="Controlled by PyTorch">
+        <br>
+        <label>- Ensure PyTorch ENV is installed AND Activated</label>
+        <br>
+        <label>- Ensure save brain cleared from cache</label>
+        <br>
+        <label>- Ensure there's only 3 sensor</label>
+        <br>
+        <br>
         <input type="button" id="btnTrain" value="Train" onclick="redirTrain()">
         <input type="button" id="btnCompete" value="Compete" onclick="redirCompete()">
     </div>

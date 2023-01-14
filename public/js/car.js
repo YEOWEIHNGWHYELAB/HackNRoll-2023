@@ -75,7 +75,9 @@ class Car {
             this.#move();
 
             this.polygon = this.#drawPolygon();
-            this.damaged = this.#checkDamage(roadBorders, trafficNPC, agentTraffic);
+
+            if (!isUsingDQN)
+                this.damaged = this.#checkDamage(roadBorders, trafficNPC, agentTraffic);
         }
 
         if (this.sensor) {
@@ -91,10 +93,17 @@ class Car {
 
             // Control the car using neural network
             if (this.useBrain) {
-                this.controls.forward = outputs[0];
-                this.controls.left = outputs[1];
-                this.controls.right = outputs[2];
-                this.controls.reverse = outputs[3];
+                if (isUsingDQN) {
+                    this.controls.forward = controlList[0];
+                    this.controls.left = controlList[2];
+                    this.controls.right = controlList[1];
+                    this.controls.reverse = controlList[3];
+                } else {
+                    this.controls.forward = outputs[0];
+                    this.controls.left = outputs[1];
+                    this.controls.right = outputs[2];
+                    this.controls.reverse = outputs[3];
+                }
             }
         }
     }
@@ -205,6 +214,12 @@ class Car {
         // Translate the center of the car
         this.x -= Math.sin(this.angle) * this.speed;
         this.y -= Math.cos(this.angle) * this.speed;
+
+        if (this.x <= roadMinX)
+            this.x = roadMinX;
+        
+        if (this.x >= roadMaxX)
+            this.x = roadMaxX;
     }
 
     agentTrafficUpdate(agentData) {
@@ -223,10 +238,10 @@ class Car {
         if (this.username && this.username != "") {
             ctx.textAlign = "center";
             if (this.username != getCookie("username")) {
-                ctx.fillStyle = 'blue';
+                ctx.fillStyle = "blue";
                 ctx.fillText(this.username, this.x, this.y + (this.height));
             } else {
-                ctx.fillStyle = 'red';
+                ctx.fillStyle = "red";
                 ctx.fillText("YOU", this.x, this.y + (this.height));
             }
         }

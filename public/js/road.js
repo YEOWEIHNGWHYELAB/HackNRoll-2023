@@ -14,6 +14,9 @@ class Road {
         this.left = x - width / 2;
         this.right = x + width / 2;
 
+        roadMinX = this.left;
+        roadMaxX = this.right;
+
         // Approximate infinite values 
         const approxInfinity = 1000000;
         this.top = -approxInfinity;
