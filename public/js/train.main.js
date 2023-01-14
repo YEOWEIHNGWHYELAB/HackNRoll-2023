@@ -6,24 +6,36 @@ let road;
 let agentNum;
 let agentArr;
 let bestCar;
+let prevBestCar;
+let timeSinceBestChange;
 let traffic;
+let popup;
+let running;
 
-const initTraining = () => {
+const initGlobals = () => {
     // Window for Training Environment
-    roadCanvas = document.getElementById("roadCanvas");
+    roadCanvas = document.querySelector("#roadCanvas");
     roadCanvas.width = 300;
 
     // Window for Neural Network Visualization
-    NNCanvas = document.getElementById("NNCanvas");
+    NNCanvas = document.querySelector("#NNCanvas");
     NNCanvas.width = 300;
 
     roadCtx = roadCanvas.getContext("2d");
     NNCtx = NNCanvas.getContext("2d");
 
+    popup = document.querySelector("#divPopup");
+    running = true;
+};
+
+const resetCanvas = () => {
+    popup.style.display = "none";
+    popup.style.opacity = 0;
+
     road = new Road(roadCanvas.width / 2, roadCanvas.width * 0.9, 4);
 
     // Agent Generation
-    agentNum = 100;
+    agentNum = 10;
     agentArr = generateCars(agentNum);
     bestCar = agentArr[0];
 
@@ -45,19 +57,19 @@ const initTraining = () => {
         new Car(road.getLaneCenter(1), -100, 30, 50, "NPC", 2, getRandomColor()),
         new Car(road.getLaneCenter(3), -100, 30, 50, "NPC", 2, getRandomColor()),
         new Car(road.getLaneCenter(0), -300, 30, 50, "NPC", 2, getRandomColor()),
+        new Car(road.getLaneCenter(1), -300, 30, 50, "NPC", 2, getRandomColor()),
         new Car(road.getLaneCenter(2), -300, 30, 50, "NPC", 2, getRandomColor()),
-        new Car(road.getLaneCenter(0), -500, 30, 50, "NPC", 2, getRandomColor()),
-        new Car(road.getLaneCenter(1), -500, 30, 50, "NPC", 2, getRandomColor()),
+        new Car(road.getLaneCenter(3), -300, 30, 50, "NPC", 2, getRandomColor()),
     ];
 };
 
 // Rules for defining best car
-function getBestAgent() {
+const getBestAgent = () => {
     return agentArr.find((c) => c.y == Math.min(...agentArr.map((c) => c.y)));
-}
+};
 
 // Generate agents on road
-function generateCars(N) {
+const generateCars = (N) => {
     let cars = [];
 
     // Initialize all the agents
@@ -66,10 +78,34 @@ function generateCars(N) {
     }
 
     return cars;
-}
+};
 
+/**
+ * Resets the canvas, for a next round of training
+ * @param {boolean} saveBest Flag whether to save the best agent for the current session
+ */
+const resetTraining = (saveBest) => {
+    if (saveBest)
+        saveBrain();
+    resetCanvas();
+};
 
-function animate(time) {
+/**
+ * Shows popup when all agents have stopped
+ */
+const showPopup = () => {
+    running = false;
+    popup.style.display = "block";
+    setTimeout(function () {
+        popup.style.opacity = 1;
+    }, 100);
+};
+
+/**
+ * Updates NPC & agents and redraws the canvas
+ * @param {number} time 
+ */
+const animate = (time) => {
     // Update traffic NPC and agents
     for (let i = 0; i < traffic.length; i++) {
         traffic[i].update(road.borders, []);
@@ -78,7 +114,14 @@ function animate(time) {
         agentArr[i].update(road.borders, traffic);
     }
 
+    prevBestCar = bestCar;
     bestCar = getBestAgent();
+
+    // if all cars have stopped
+    let stopCond = agentArr.every((agent) => agent.damaged);
+    if (stopCond) {
+        showPopup();
+    }
 
     roadCanvas.height = window.innerHeight;
     NNCanvas.height = window.innerHeight;
@@ -129,10 +172,12 @@ function animate(time) {
     NNCtx.lineDashOffset = -time / 50; // Make the line dash of the neural network visualizer move
     Visualizer.drawNetwork(NNCtx, bestCar.brain);
 
-    requestAnimationFrame(animate);
-}
+    if (running)
+        requestAnimationFrame(animate);
+};
 
 window.onload = () => {
-    initTraining();
+    initGlobals();
+    resetCanvas();
     animate();
 };

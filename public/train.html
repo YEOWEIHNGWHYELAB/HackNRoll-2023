@@ -2,16 +2,16 @@
 
 <head>
     <title>Maniac Self-Driving Agent</title>
-    <link rel="stylesheet" href="css/train.css">
-    <script src="js/visualizer.js"></script>
-    <script src="js/network.js"></script>
-    <script src="js/sensor.js"></script>
-    <script src="js/utils.js"></script>
-    <script src="js/road.js"></script>
-    <script src="js/controls.js"></script>
-    <script src="js/car.js"></script>
-    <script src="js/storage.js"></script>
-    <script src="js/train.main.js"></script>
+    <link rel="stylesheet" href="/css/train.css">
+    <script src="/js/visualizer.js"></script>
+    <script src="/js/network.js"></script>
+    <script src="/js/sensor.js"></script>
+    <script src="/js/utils.js"></script>
+    <script src="/js/road.js"></script>
+    <script src="/js/controls.js"></script>
+    <script src="/js/car.js"></script>
+    <script src="/js/storage.js"></script>
+    <script src="/js/train.main.js"></script>
 </head>
 
 <body>
@@ -20,12 +20,21 @@
     <div id="verticalButtons">
         <span id="btnSave" onclick="saveBrain()">💾</span>
         <span id="btnDel" onclick="discardBrain()">🗑️</span>
+        <span id="btnReset" onclick="resetTraining(false)">🔁</span>
         <span id="btnExport" onclick="exportBrain()">📥</span>
         <input type="file" id="btnImport" onchange="importBrain(event)" />
         <label for="btnImport" id="btnImportLbl">📤</label>
     </div>
 
     <canvas id="NNCanvas"></canvas>
+
+    <div id="divPopup">
+        <div id="txtPopup">All agents have stopped, save previous best model?</div>
+        <div id="continueContainer">
+            <span class="btn-continue" id="btnContinueSave" onclick="resetTraining(true)">Save</span>
+            <span class="btn-continue" id="btnContinueNoSave" onclick="resetTraining(false)">Do not Save</span>
+        </div>
+    </div>
 </body>
 
 </html>

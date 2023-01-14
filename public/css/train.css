@@ -51,3 +51,47 @@ body {
 #roadCanvas {
     background: lightgray;
 }
+
+#divPopup {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 30rem;
+    height: 10rem;
+    background: whitesmoke;
+    border-radius: 2rem;
+}
+
+#divPopup {
+    display: none;
+    opacity: 0;
+    transition: opacity 1s;
+}
+
+#txtPopup,
+#continueContainer {
+    max-width: fit-content;
+    margin: auto;
+    margin-top: 2.5rem;
+    font-family: monospace;
+    font-size: larger;
+}
+
+.btn-continue {
+    margin: 0 2rem 0 2rem;
+    padding: 0.5rem;
+    border-radius: 0.25rem;
+    width: 6rem;
+    display: inline-block;
+    text-align: center;
+    cursor: pointer;
+}
+
+#btnContinueSave {
+    background: lightgreen;
+}
+
+#btnContinueNoSave {
+    background: indianred;
+}

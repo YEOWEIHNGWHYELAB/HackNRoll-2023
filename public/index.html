@@ -4,11 +4,23 @@
 <head>
     <title>Hack&Roll 2023</title>
     <meta name="description" content="Our Hack&Roll 2023 Project">
+    <link rel="stylesheet" href="/css/index.css">
+    <script src="/js/index.main.js"></script>
 </head>
 
 <body>
-    <a href="/train">Train</a>
-    <a href="/compete">Compete</a>
+    <div>
+        <a href="/train">Train</a>
+        <a href="/compete">Compete</a>
+    </div>
+    <div>
+        <label for="txtUsername">Username: </label>
+        <input type="text" id="txtUsername">
+        <label for="txtPassword">Password: </label>
+        <input type="password" id="txtPassword">
+        <input type="button" value="Register" onclick="register()">
+        <input type="button" value="Login" onclick="login()">
+    </div>
 </body>
 
 </html>
