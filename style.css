@@ -1,0 +1,47 @@
+body {
+  margin: 0;
+  background: black;
+  overflow: hidden;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#verticalButtons {
+  display: flex;
+  flex-direction: column;
+}
+
+buttonsave {
+  border: none;
+  border-radius: 15px;
+  padding: 6px 6px 8px 6px;
+  margin: 5px;
+  cursor: pointer;
+  background: white;
+}
+
+buttondelete {
+  border: none;
+  border-radius: 15px;
+  padding: 6px 6px 8px 6px;
+  margin: 5px;
+  cursor: pointer;
+  background: white;
+}
+
+buttonsave:hover {
+  background: green;
+}
+
+buttondelete:hover {
+  background: red;
+}
+
+#neuralnetworkCanvas {
+  background: darkgrey;
+}
+
+#roadCanvas {
+  background: lightgray;
+}
