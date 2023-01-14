@@ -42,6 +42,7 @@ const resetCanvas = (agentCount = 10, isMultiplayerCar = false) => {
     } else {
         agentArr = generateCars(agentNum);
     }
+
     bestCar = agentArr[0];
 
     // Check if there is already saved brain in local storage
@@ -73,7 +74,7 @@ const generateCars = (N) => {
 
     // Initialize all the agents
     for (let i = 1; i <= N; i++) {
-        cars.push(new Car(road.getLaneCenter(2), 0, 30, 50, "MANUAL"));
+        cars.push(new Car(road.getLaneCenter(2), 0, 30, 50, "AI"));
     }
 
     return cars;
@@ -84,7 +85,7 @@ const generateMyAgent = (N) => {
 
     // Initialize all the agents
     for (let i = 1; i <= N; i++) {
-        cars.push(new Car(road.getLaneCenter(2), 0, 30, 50, "MANUAL"));
+        cars.push(new Car(road.getLaneCenter(2), 0, 30, 50, "AI"));
     }
 
     return cars;

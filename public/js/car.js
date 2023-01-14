@@ -40,6 +40,7 @@ class Car {
             this.brain = new NeuralNetwork([this.sensor.rayCount, 6, 4]);
         } else if (controlType == "MANUAL") {
             this.sensor = new Sensor(this);
+            this.brain = new NeuralNetwork([this.sensor.rayCount, 6, 4]);
         }
 
         if (controlType == "NPCAgent") {
@@ -83,10 +84,8 @@ class Car {
                 s == null ? 0 : 1 - s.offset
             );
 
-            if (this.brain) {
-                const outputs = NeuralNetwork.feedForward(offsets, this.brain);
-            }
-
+            const outputs = NeuralNetwork.feedForward(offsets, this.brain);
+            
             // Control the car using neural network
             if (this.useBrain) {
                 this.controls.forward = outputs[0];
@@ -204,7 +203,7 @@ class Car {
         this.y -= Math.cos(this.angle) * this.speed;
     }
 
-    agentTrafficUpdate (agentData) {
+    agentTrafficUpdate(agentData) {
         if (agentData["x"])
             this.x = agentData["x"];
         

@@ -32,7 +32,7 @@ const animate = (time) => {
     data = {
         "x": bestCar.x,
         "y": bestCar.y,
-        "a": bestCar.a,
+        "a": bestCar.angle,
     };
 
     emitAgentData(getCookie("username"), data);
