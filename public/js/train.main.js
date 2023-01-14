@@ -1,6 +1,5 @@
 /**
  * Updates NPC & agents and redraws the canvas
- * 
  * @param {number} time 
  */
 const animate = (time) => {

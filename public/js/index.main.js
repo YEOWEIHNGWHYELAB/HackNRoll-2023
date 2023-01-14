@@ -1,3 +1,8 @@
+const redirCompete = () => {
+    let roomID = document.querySelector("#txtRoomID").value;
+    window.location.href = `/compete?roomID=${roomID}`;
+};
+
 const register = () => {
     let username = document.querySelector("#txtUsername").value,
         password = document.querySelector("#txtPassword").value;

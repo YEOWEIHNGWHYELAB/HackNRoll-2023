@@ -1,7 +1,8 @@
-var socket = io();
+var socket = io.connect();
 
 socket.on("connect", () => {
     console.log("Connected to Socket.io server!");
+    const sessionID = socket.id;
 });
 
 // Emit your data to other users
@@ -16,11 +17,16 @@ function emitNew(username) {
     socket.emit("new_agent", username);
 }
 
-function emitWhoseOnline(username) {
-    socket.emit("whose_online", username);
+function emitWhoseOnline(username, roomID) {
+    socket.emit("whose_online", username, roomID);
+}
+
+function joinRoom(roomID, username) {
+    socket.emit("join_room", roomID, username);
 }
 
 socket.on("agent_refresh", function (username) {
+    // console.log("Room: " + roomID + " online users: " + username);
     agentOnline = [...username];
     agentTraffic = [];
 
@@ -43,11 +49,12 @@ socket.on("agent_left", function (username) {
 
 // ICMP Echo request by server, emit your own username
 socket.on("icmp_echo", function () {
-    emitWhoseOnline(getCookie("username"));
+    emitWhoseOnline(getCookie("username"), roomID);
 });
 
 // Gets emitted data of other agents and updates environment
 socket.on("agent_data", function (data) {
+    // console.log(data);
     username = data["username"];
     i = 0;
 

@@ -28,7 +28,6 @@ function importBrain(event) {
 
 /**
  * Ensures content of file uploaded is what we expect in bestBrain
- * 
  * @param {string} content 
  * @returns {boolean} Flag whether file is valid
  */

@@ -9,7 +9,7 @@ const port = 8083;
 
 const routes = require("./routes");
 
-var usersOnline = [];
+var usersOnline = {};
 
 // initialise db
 const db = require("./db");

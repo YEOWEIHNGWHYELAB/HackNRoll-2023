@@ -1,14 +1,15 @@
 let x;
 let y;
 let a;
-let agentOnline;
+let agentOnline = [];
+let roomID;
 
 function getCookie(cname) {
     let name = cname + "=";
     let decodedCookie = decodeURIComponent(document.cookie);
     let ca = decodedCookie.split(";");
 
-    for(let i = 0; i <ca.length; i++) {
+    for (let i = 0; i < ca.length; i++) {
         let c = ca[i];
 
         while (c.charAt(0) == " ") {
@@ -41,14 +42,17 @@ const animate = (time) => {
     data["a"] = a;
 
     emitAgentData(getCookie("username"), data);
-    
+
     if (running)
         requestAnimationFrame(animate);
 };
 
 window.onload = () => {
+    let urlParams = new URLSearchParams(window.location.search);
+    roomID = urlParams.get("roomID");
+
+    joinRoom(roomID, getCookie("username"));
     emitNew(getCookie("username"));
-    // emitWhoseOnline(getCookie("username"));
     initGlobals();
     resetCanvas(1, true);
     animate();
