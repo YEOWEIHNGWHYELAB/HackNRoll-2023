@@ -9,10 +9,10 @@ let traffic;
 let agentTraffic;
 let running;
 
-const initGlobals = () => {
+const initGlobals = (laneCount) => {
     // Window for Training Environment
     roadCanvas = document.querySelector("#roadCanvas");
-    roadCanvas.width = 300;
+    roadCanvas.width = 300 + ((laneCount - 4) * 60);
 
     // Window for Neural Network Visualization
     NNCanvas = document.querySelector("#NNCanvas");
@@ -24,20 +24,20 @@ const initGlobals = () => {
     running = false;
 };
 
-const resetCanvas = () => {
-    road = new Road(roadCanvas.width / 2, roadCanvas.width * 0.9, 4);
+const resetCanvas = (laneCount = 4) => {
+    road = new Road(roadCanvas.width / 2, roadCanvas.width * 0.9, laneCount);
 
     // Agent Generation
-    agentArr = generateMyAgent(1);
-
+    agentArr = [new Car(road.getLaneCenter(2), 0, 30, 50, "AI", getCookie("username"), 3, "blue", 5, 6)];
     bestCar = agentArr[0];
 
     // Check if there is already saved brain in local storage
     if (localStorage.getItem("bestBrain")) {
         // Load brain into agents
         for (let i = 0; i < agentArr.length; i++) {
+            agentArr[i].sensor = new Sensor(agentArr[i], JSON.parse(localStorage.getItem("bestBrain"))["levels"][0]["inputs"].length);
             agentArr[i].brain = JSON.parse(localStorage.getItem("bestBrain"));
-
+            
             // Mutate all agent's brain except first one
             if (i != 0) {
                 NeuralNetwork.mutate(agentArr[i].brain, 0.1);
@@ -53,23 +53,6 @@ const resetCanvas = () => {
 // Rules for defining best car
 const getBestAgent = () => {
     return agentArr.find((c) => c.y == Math.min(...agentArr.map((c) => c.y)));
-};
-
-// Generate agents on road
-const generateCars = (N) => {
-    let cars = [];
-
-    // Initialize all the agents
-    for (let i = 1; i <= N; i++) {
-        cars.push(new Car(road.getLaneCenter(2), 0, 30, 50, "AI"));
-    }
-
-    return cars;
-};
-
-const generateMyAgent = () => {
-    let cars = [new Car(road.getLaneCenter(2), 0, 30, 50, "AI")];
-    return cars;
 };
 
 function updateCars() {
@@ -124,12 +107,6 @@ function drawEnv(time, isSinglePlayer) {
     // Draw Agent of another traffic
     for (let i = 0; i < agentTraffic.length; i++) {
         agentTraffic[i].draw(roadCtx);
-    }
-
-    // Draw all the agents that are not best to be lower in alpha value
-    roadCtx.globalAlpha = 0.2;
-    for (let i = 0; i < agentArr.length; i++) {
-        agentArr[i].draw(roadCtx, true);
     }
 
     // Only draw the sensor and the clearest on the best car

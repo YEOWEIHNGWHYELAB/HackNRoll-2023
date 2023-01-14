@@ -13,10 +13,10 @@ let agentTraffic;
 let popup;
 let running;
 
-const initGlobals = () => {
+const initGlobals = (laneCount) => {
     // Window for Training Environment
     roadCanvas = document.querySelector("#roadCanvas");
-    roadCanvas.width = 300;
+    roadCanvas.width = 300 + ((laneCount - 4) * 60);
 
     // Window for Neural Network Visualization
     NNCanvas = document.querySelector("#NNCanvas");
@@ -29,19 +29,15 @@ const initGlobals = () => {
     running = true;
 };
 
-const resetCanvas = (agentCount = 10, isMultiplayerCar = false) => {
+const resetCanvas = (agentCount = 10, isMultiplayerCar = false, laneCount = 4) => {
     popup.style.display = "none";
     popup.style.opacity = 0;
 
-    road = new Road(roadCanvas.width / 2, roadCanvas.width * 0.9, 4);
+    road = new Road(roadCanvas.width / 2, roadCanvas.width * 0.9, laneCount);
 
     // Agent Generation
     agentNum = agentCount;
-    if (isMultiplayerCar) {
-        agentArr = generateMyAgent(1);
-    } else {
-        agentArr = generateCars(agentNum);
-    }
+    agentArr = generateCars(agentNum);
 
     bestCar = agentArr[0];
 
@@ -50,6 +46,7 @@ const resetCanvas = (agentCount = 10, isMultiplayerCar = false) => {
         // Load brain into agents
         for (let i = 0; i < agentArr.length; i++) {
             agentArr[i].brain = JSON.parse(localStorage.getItem("bestBrain"));
+            agentArr[i].sensor = new Sensor(agentArr[i], JSON.parse(localStorage.getItem("bestBrain"))["levels"][0]["inputs"].length);
 
             // Mutate all agent's brain except first one
             if (i != 0) {
@@ -74,18 +71,7 @@ const generateCars = (N) => {
 
     // Initialize all the agents
     for (let i = 1; i <= N; i++) {
-        cars.push(new Car(road.getLaneCenter(2), 0, 30, 50, "AI"));
-    }
-
-    return cars;
-};
-
-const generateMyAgent = (N) => {
-    let cars = [];
-
-    // Initialize all the agents
-    for (let i = 1; i <= N; i++) {
-        cars.push(new Car(road.getLaneCenter(2), 0, 30, 50, "AI"));
+        cars.push(new Car(road.getLaneCenter(2), 0, 30, 50, "AI", "", 3, "green", sensorCount, hiddenLayerCount));
     }
 
     return cars;
@@ -99,19 +85,52 @@ const resetTraining = (saveBest) => {
     if (saveBest)
         saveBrain();
 
-    resetCanvas();
+    running = true;
+    startEnv();
 };
 
 /**
  * Shows popup when all agents have stopped
  */
 const showPopup = () => {
-    running = false;
+    // running = false;
     popup.style.display = "block";
     setTimeout(function () {
         popup.style.opacity = 1;
     }, 100);
 };
+
+function startEnv() {
+    let urlParams = new URLSearchParams(window.location.search);
+    laneCount = parseInt(urlParams.get("laneCount"));
+    agentCount = parseInt(urlParams.get("agentCount"));
+    sensorSpread = parseInt(urlParams.get("sensorSpread"));
+    sensorLength = parseInt(urlParams.get("sensorLength"));
+    sensorCount = parseInt(urlParams.get("sensorCount"));
+    hiddenLayerCount = parseInt(urlParams.get("hiddenLayerCount"));
+
+    if (!agentCount)
+        agentCount = 10;
+
+    if (!laneCount || laneCount < 3 || laneCount > 9)
+        laneCount = 4;
+
+    if (!sensorSpread)
+        sensorSpread = 90;
+
+    if (!sensorLength)
+        sensorLength = 150;
+
+    if (!sensorCount)
+        sensorCount = 5;
+
+    if (!hiddenLayerCount)
+        hiddenLayerCount = 6;
+
+    initGlobals(laneCount);
+    resetCanvas(agentCount, false, laneCount);
+    trafficInit();
+}
 
 function trafficNPCController() {
     // Compare best car with last NPC car
@@ -177,7 +196,7 @@ function envUpdate(time, isSinglePlayer) {
     // Draw all the agents that are not best to be lower in alpha value
     roadCtx.globalAlpha = 0.2;
     for (let i = 0; i < agentArr.length; i++) {
-        agentArr[i].draw(roadCtx, true);
+        agentArr[i].draw(roadCtx);
     }
 
     // Only draw the sensor and the clearest on the best car

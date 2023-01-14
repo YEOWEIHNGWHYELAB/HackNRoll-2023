@@ -39,7 +39,7 @@ function socketHandling(io) {
         });
 
         // On receiving of join room by client, check if it is already an existing user
-        socket.on("join_room", (roomID, username) => {
+        socket.on("join_room", (roomID, username, laneCount) => {
             socketUserMap.set(socketID, username);
 
             // Handling the case when it leaves a room its in and join another room
@@ -55,18 +55,13 @@ function socketHandling(io) {
             }
 
             try {
-                let res = addUserToRoom(roomID, username);
+                let res = addUserToRoom(roomID, username, laneCount);
 
                 if (res) {
                     socket.join(roomID);
                     socket.to(roomID).emit("chat_message", username + " has joined");
                     socketRoomMap.set(socketID, roomID);
-                    io.to(roomID).emit("agent_refresh", [...roomInfo[roomID]["users"]]);
-                    socket.emit("init_traffic", {
-                        type: "init",
-                        traffic: roomInfo[roomID]["traffic"],
-                        trafficOffset: roomInfo[roomID]["trafficOffset"],
-                    });
+                    refreshScreen(io, roomID, socket);
                 } else {
                     throw new Error("Room is currently full");
                 }
@@ -74,6 +69,14 @@ function socketHandling(io) {
                 console.error("[Error]", "Joining room: ", e);
                 socket.emit("error", e.message);
             }
+        });
+
+        socket.on("lane_count_request", (roomID) => {
+            if (roomInfo[roomID]) {
+                io.to(roomID).emit("lane_count", roomInfo[roomID]["laneCount"]);
+            }
+
+            refreshScreen(io, roomID, socket);
         });
 
         socket.on("agent_ready", () => {
@@ -101,7 +104,6 @@ function socketHandling(io) {
                 username = socketUserMap.get(socketID);
             if (roomID !== undefined)
                 roomInfo[roomID]["readyUsers"].delete(username);
-            // console.log(roomInfo[roomID]["readyUsers"]);
         });
 
         // Broadcast the agent's position and orientation to other players
@@ -133,6 +135,15 @@ function socketHandling(io) {
                 }
             }
         });
+    });
+}
+
+function refreshScreen(io, roomID, socket) {
+    io.to(roomID).emit("agent_refresh", [...roomInfo[roomID]["users"]]);
+    socket.emit("init_traffic", {
+        type: "init",
+        traffic: roomInfo[roomID]["traffic"],
+        trafficOffset: roomInfo[roomID]["trafficOffset"],
     });
 }
 
@@ -190,7 +201,6 @@ function handleAgentMovement(io, roomID, msg) {
             trafficOffset: roomInfo[roomID]["trafficOffset"],
         });
     }
-
 }
 
 /**
@@ -199,15 +209,15 @@ function handleAgentMovement(io, roomID, msg) {
  * @param {string} username 
  * @returns {boolean} Flag whether user has been added to the room successfully
  */
-function addUserToRoom(roomID, username) {
+function addUserToRoom(roomID, username, laneCount) {
     if (roomID in roomInfo === false) {
         roomInfo[roomID] = {
             "roomID": roomID,
             "userCount": 0,
-            "maxUserCount": 4,
+            "maxUserCount": laneCount,
             "users": new Set(),
             "agents": {},
-            "laneCount": 4,
+            "laneCount": laneCount,
             "traffic": [],
             "trafficOffset": 0,
             "readyUsers": new Set(),

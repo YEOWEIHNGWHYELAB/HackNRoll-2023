@@ -1,4 +1,10 @@
 let roomID;
+let laneCount;
+let sensorSpread;
+let sensorLength;
+let sensorCount;
+let hiddenLayerCount;
+
 
 function getCookie(cname) {
     let name = cname + "=";
@@ -41,14 +47,24 @@ const animate = (time) => {
 
 window.onload = () => {
     let urlParams = new URLSearchParams(window.location.search);
-    roomID = urlParams.get("roomID");
     username = getCookie("username");
+    roomID = urlParams.get("roomID");
+    sensorSpread = urlParams.get("sensorSpread");
+    sensorLength = urlParams.get("sensorLength");
+    laneCount = urlParams.get("laneCount");
+
+    if (laneCount < 3 || laneCount > 9)
+        laneCount = 4;
+
+    if (!sensorSpread)
+        sensorSpread = 90;
+    
+    if (!sensorLength) 
+        sensorLength = 150;
 
     initChatDOM();
-    joinRoom(roomID, username);
-    emitNew(username);
-    initGlobals();
-    resetCanvas(1, true);
-    updateCars();
-    animate();
+    joinRoom(roomID, username, laneCount);
+    requestLaneSync(roomID);
+    initGlobals(laneCount);
+    resetCanvas(laneCount);
 };

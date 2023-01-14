@@ -10,16 +10,32 @@
 
 <body>
     <div>
-        <a href="/train">Train</a>
-        <br>
         <input type="text" id="txtRoomID" placeholder="Room ID">
+        <br>
+        <input type="number" id="agentCount" placeholder="Agent Count">
+        <br>
+        <input type="number" id="txtLaneCount" placeholder="Lane Count">
+        <br>
+        <input type="number" id="sensorSpread" placeholder="Sensor Spread 90 to 360°">
+        <br>
+        <input type="number" id="sensorLength" placeholder="Sensor Range > 150">
+        <br>
+        <input type="number" id="sensorCount" placeholder="Sensor Count > 5">
+        <br>
+        <input type="number" id="hiddenLayerCount" placeholder="Hidden Layer Count">
+        <br>
+        <br>
+        <input type="button" id="btnTrain" value="Train" onclick="redirTrain()">
         <input type="button" id="btnCompete" value="Compete" onclick="redirCompete()">
     </div>
     <div>
+        <br>
+        <br>
         <label for="txtUsername">Username: </label>
         <input type="text" id="txtUsername">
         <label for="txtPassword">Password: </label>
         <input type="password" id="txtPassword">
+        <br>
         <input type="button" value="Register" onclick="register()">
         <input type="button" value="Login" onclick="login()">
     </div>

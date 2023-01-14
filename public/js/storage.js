@@ -25,7 +25,6 @@ function importBrain(event) {
     reader.readAsText(input.files[0]);
 }
 
-
 /**
  * Ensures content of file uploaded is what we expect in bestBrain
  * @param {string} content 

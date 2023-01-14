@@ -11,7 +11,7 @@ class Car {
      * @param {number} maxSpeed 
      * @param {string} color 
      */
-    constructor(x, y, width, height, controlType, username = "", maxSpeed = 3, color = "blue") {
+    constructor(x, y, width, height, controlType, username = "", maxSpeed = 3, color = "blue", rayCount = 5, hiddenCount = 6) {
         /**
          * Where to draw the car and the size
          */
@@ -38,11 +38,12 @@ class Car {
          * Only add sensor to Agent (Best Choosen)
          */
         if (controlType == "AI") {
-            this.sensor = new Sensor(this);
-            this.brain = new NeuralNetwork([this.sensor.rayCount, 6, 4]);
+            this.username = username;
+            this.sensor = new Sensor(this, rayCount);
+            this.brain = new NeuralNetwork([rayCount, hiddenCount, 4]);
         } else if (controlType == "MANUAL") {
-            this.sensor = new Sensor(this);
-            this.brain = new NeuralNetwork([this.sensor.rayCount, 6, 4]);
+            this.sensor = new Sensor(this, rayCount);
+            this.brain = new NeuralNetwork([rayCount, hiddenCount, 4]);
         }
 
         if (controlType == "NPCAgent") {
@@ -219,6 +220,11 @@ class Car {
 
     // Draw car & Sensor
     draw(ctx, drawSensor = false) {
+        if (this.username && this.username != "") {
+            ctx.textAlign = "center";
+            ctx.fillText(this.username, this.x, this.y + (this.height));
+        }
+
         if (this.sensor && drawSensor) {
             this.sensor.draw(ctx);
         }

@@ -1,14 +1,21 @@
+let laneCount;
+let agentCount;
+let sensorSpread;
+let sensorLength;
+let sensorCount;
+let hiddenLayerCount;
+
 /**
  * Updates NPC & agents and redraws the canvas
  * @param {number} time 
  */
-const animate = (time) => {
+function animate(time) {
     // Update traffic NPC and agents
     envUpdate(time, true);
 
     if (running)
         requestAnimationFrame(animate);
-};
+}
 
 function trafficInit() {
     traffic.push(new Car(road.getLaneCenter(1), -100, 30, 50, "NPC", "", 2, getRandomColor()));
@@ -20,8 +27,6 @@ function trafficInit() {
 }
 
 window.onload = () => {
-    initGlobals();
-    resetCanvas(100);
-    trafficInit();
+    startEnv();
     animate();
 };

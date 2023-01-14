@@ -1,6 +1,22 @@
+function getParam() {
+    let laneCount = document.querySelector("#txtLaneCount").value;
+    let sensorLength = document.querySelector("#sensorLength").value;
+    let sensorSpread = document.querySelector("#sensorSpread").value;
+    let sensorCount = document.querySelector("#sensorCount").value;
+    let hiddenLayerCount = document.querySelector("#hiddenLayerCount").value;
+    return { laneCount, sensorLength, sensorSpread, sensorCount, hiddenLayerCount };
+}
+
 const redirCompete = () => {
     let roomID = document.querySelector("#txtRoomID").value;
-    window.location.href = `/compete?roomID=${roomID}`;
+    let { laneCount, sensorLength, sensorSpread, sensorCount, hiddenLayerCount } = getParam();
+    window.location.href = `/compete?roomID=${roomID}&laneCount=${laneCount}&sensorLength=${sensorLength}&sensorSpread=${sensorSpread}`;
+};
+
+const redirTrain = () => {
+    let agentCount = document.querySelector("#agentCount").value;
+    let { laneCount, sensorLength, sensorSpread, sensorCount, hiddenLayerCount } = getParam();
+    window.location.href = `/train?laneCount=${laneCount}&agentCount=${agentCount}&sensorLength=${sensorLength}&sensorSpread=${sensorSpread}&sensorCount=${sensorCount}&hiddenLayerCount=${hiddenLayerCount}`;
 };
 
 const register = () => {

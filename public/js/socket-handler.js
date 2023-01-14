@@ -1,9 +1,6 @@
 let socket = io.connect();
 let username = "";
-
-socket.on("connect", () => {
-    console.log("Connected to Socket.io server");
-});
+let hasSync = false;
 
 // Emit your data to other users
 function emitAgentData(username, agentData) {
@@ -14,12 +11,8 @@ function emitAgentData(username, agentData) {
     socket.emit("agent_data", dataEmit);
 }
 
-function emitNew(username) {
-    socket.emit("new_agent", username);
-}
-
-function joinRoom(roomID, username) {
-    socket.emit("join_room", roomID, username);
+function joinRoom(roomID, username, laneCount) {
+    socket.emit("join_room", roomID, username, laneCount);
 }
 
 function toggleReady() {
@@ -109,10 +102,30 @@ function error(msg) {
     alert(msg);
 }
 
+function requestLaneSync(roomID) {
+    socket.emit("lane_count_request", roomID);
+}
+
+function laneCountSync(roomLaneCount) {
+    if (!hasSync) {
+        laneCount = roomLaneCount;
+        initGlobals(laneCount);
+        resetCanvas(laneCount);
+        updateCars();
+        animate();
+
+        hasSync = true;
+    }
+}
+
 // Removes agent from memory when they disconnect
+socket.on("connect", () => {
+    console.log("Connected to Socket.io server");
+});
 socket.on("agent_left", function (username) {
     agentTraffic = agentTraffic.filter((a) => a.username !== username);
 });
+socket.on("lane_count", laneCountSync);
 socket.on("agent_refresh", agentRefresh);
 socket.on("chat_message", appendChatMsg);
 socket.on("agent_data", syncAgentData);
