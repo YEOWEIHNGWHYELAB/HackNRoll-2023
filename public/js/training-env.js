@@ -38,7 +38,7 @@ const resetCanvas = (agentCount = 10, isMultiplayerCar = false) => {
     // Agent Generation
     agentNum = agentCount;
     if (isMultiplayerCar) {
-        agentArr = generateMyAgent(agentNum, 0);
+        agentArr = generateMyAgent(1);
     } else {
         agentArr = generateCars(agentNum);
     }
@@ -73,20 +73,20 @@ const generateCars = (N) => {
 
     // Initialize all the agents
     for (let i = 1; i <= N; i++) {
-        cars.push(new Car(road.getLaneCenter(2), 100, 30, 50, "MANUAL"));
+        cars.push(new Car(road.getLaneCenter(2), 0, 30, 50, "MANUAL"));
     }
 
     return cars;
 };
 
-const generateMyAgent = (N, laneNum) => {
+const generateMyAgent = (N) => {
     let cars = [];
 
     // Initialize all the agents
     for (let i = 1; i <= N; i++) {
-        cars.push(new Car(road.getLaneCenter(2), 100, 30, 50, "MANUAL"));
+        cars.push(new Car(road.getLaneCenter(2), 0, 30, 50, "MANUAL"));
     }
-    
+
     return cars;
 };
 
@@ -116,7 +116,7 @@ function trafficNPCController() {
     // Compare best car with last NPC car
     let lastNPC = traffic[traffic.length - 1];
     let distDiff = bestCar.y - lastNPC.y;
-    
+
     // If the distance is close enough, generate a new NPC car
     if (distDiff <= road.yDistThreshold) {
         let l1 = road.getRandomLaneCenter();

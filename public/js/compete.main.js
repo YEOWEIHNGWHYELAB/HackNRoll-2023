@@ -1,6 +1,3 @@
-let x;
-let y;
-let a;
 let agentOnline = [];
 let roomID;
 
@@ -32,19 +29,14 @@ const animate = (time) => {
     // Update traffic NPC and agents
     envUpdate(time, false);
 
-    data = {};
-
-    x = bestCar.x;
-    data["x"] = x;
-    y = bestCar.y;
-    data["y"] = y;
-    a = bestCar.angle;
-    data["a"] = a;
+    data = {
+        "x": bestCar.x,
+        "y": bestCar.y,
+        "a": bestCar.a,
+    };
 
     emitAgentData(getCookie("username"), data);
-
-    if (running)
-        requestAnimationFrame(animate);
+    requestAnimationFrame(animate);
 };
 
 window.onload = () => {

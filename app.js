@@ -9,8 +9,6 @@ const port = 8083;
 
 const routes = require("./routes");
 
-var usersOnline = {};
-
 // initialise db
 const db = require("./db");
 db.initDB();
@@ -25,7 +23,7 @@ app.use(routes.pages);
 app.use(routes.user);
 
 // Socket Handling
-socket.socketHandling(io, app, usersOnline);
+socket.socketHandling(io);
 
 // Server Initialization
 http.listen(port, () => {
