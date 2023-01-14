@@ -1,7 +1,8 @@
 let socket = io.connect();
+let username = "";
 
 socket.on("connect", () => {
-    console.log("Connected to Socket.io server!");
+    console.log("Connected to Socket.io server");
 });
 
 // Emit your data to other users
@@ -21,7 +22,34 @@ function joinRoom(roomID, username) {
     socket.emit("join_room", roomID, username);
 }
 
-socket.on("agent_refresh", function (users) {
+function toggleReady() {
+    let btnReady = document.querySelector("#btnReady");
+
+    if (btnReady.dataset.ready === "0") {
+        btnReady.dataset.ready = "1";
+        btnReady.style.background = "greenyellow";
+        socket.emit("agent_ready");
+    } else if (btnReady.dataset.ready === "1") {
+        btnReady.dataset.ready = "0";
+        btnReady.style.background = "white";
+        socket.emit("agent_not_ready");
+    }
+}
+
+function syncAgentData(data) {
+    username = data["username"];
+
+    for (let i = 0; i < agentTraffic.length; i++) {
+        if (agentTraffic[i].username == username) {
+            agentTraffic[i].agentTrafficUpdate(data["agentData"]);
+        }
+    }
+}
+
+function agentRefresh(users) {
+    if (JSON.stringify(users) === "{}")
+        return;
+
     agentOnline = [...users];
     agentTraffic = [];
     laneNum = 0;
@@ -35,28 +63,7 @@ socket.on("agent_refresh", function (users) {
             bestCar.angle = 0;
         }
     }
-});
-
-// Removes agent from memory when they disconnect
-socket.on("agent_left", function (username) {
-    agentTraffic = agentTraffic.filter((a) => a.username !== username);
-});
-
-// Gets emitted data of other agents and updates environment
-socket.on("agent_data", function (data) {
-    username = data["username"];
-
-    for (let i = 0; i < agentTraffic.length; i++) {
-        if (agentTraffic[i].username == username) {
-            agentTraffic[i].agentTrafficUpdate(data["agentData"]);
-        }
-    }
-});
-
-socket.on("ended", showScores);
-
-socket.on("init_traffic", spawnTraffic);
-socket.on("new_traffic", spawnTraffic);
+}
 
 /**
  * 
@@ -93,3 +100,24 @@ function showScores(scores) {
         divScores.style.opacity = 1;
     }, 100);
 }
+
+function gameStart() {
+    running = true;
+}
+
+function error(msg) {
+    alert(msg);
+}
+
+// Removes agent from memory when they disconnect
+socket.on("agent_left", function (username) {
+    agentTraffic = agentTraffic.filter((a) => a.username !== username);
+});
+socket.on("agent_refresh", agentRefresh);
+socket.on("chat_message", appendChatMsg);
+socket.on("agent_data", syncAgentData);
+socket.on("ended", showScores);
+socket.on("init_traffic", spawnTraffic);
+socket.on("new_traffic", spawnTraffic);
+socket.on("game_start", gameStart);
+socket.on("error", error);

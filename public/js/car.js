@@ -1,3 +1,5 @@
+let isCollideAgentTraffic = false;
+
 class Car {
     /**
      * 
@@ -85,7 +87,7 @@ class Car {
             );
 
             const outputs = NeuralNetwork.feedForward(offsets, this.brain);
-            
+
             // Control the car using neural network
             if (this.useBrain) {
                 this.controls.forward = outputs[0];
@@ -123,7 +125,8 @@ class Car {
      * @returns boolean on whether did the car get damage
      */
     #checkDamage(roadBorders, trafficNPC, agentTraffic) {
-        return (this.#polyIntersectCheck(roadBorders) || this.#polyIntersectCheck(trafficNPC) || this.#polyIntersectCheck(agentTraffic));
+        let collideAgentTraffic = this.#polyIntersectCheck(agentTraffic) && isCollideAgentTraffic;
+        return (this.#polyIntersectCheck(roadBorders) || this.#polyIntersectCheck(trafficNPC) || collideAgentTraffic);
     }
 
     #drawPolygon() {
@@ -206,10 +209,10 @@ class Car {
     agentTrafficUpdate(agentData) {
         if (agentData["x"])
             this.x = agentData["x"];
-        
+
         if (agentData["y"])
             this.y = agentData["y"];
-        
+
         if (agentData["a"])
             this.angle = agentData["a"];
     }

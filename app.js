@@ -1,5 +1,5 @@
-const socket = require("./socket");
 require("dotenv").config();
+const socket = require("./socket");
 const express = require("express");
 const app = express();
 const cookieParser = require("cookie-parser");

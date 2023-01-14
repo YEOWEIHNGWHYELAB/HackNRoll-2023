@@ -21,7 +21,7 @@ const initGlobals = () => {
     roadCtx = roadCanvas.getContext("2d");
     NNCtx = NNCanvas.getContext("2d");
 
-    running = true;
+    running = false;
 };
 
 const resetCanvas = () => {
@@ -72,7 +72,7 @@ const generateMyAgent = () => {
     return cars;
 };
 
-function envUpdate(time, isSinglePlayer) {
+function updateCars() {
     for (let i = 0; i < traffic.length; i++) {
         traffic[i].update(road.borders, [], []);
     }
@@ -81,6 +81,18 @@ function envUpdate(time, isSinglePlayer) {
     }
     for (let i = 0; i < agentArr.length; i++) {
         agentArr[i].update(road.borders, traffic, agentTraffic);
+    }
+}
+
+function updateAgentTraffic() {
+    for (let i = 0; i < agentTraffic.length; i++) {
+        agentTraffic[i].update(road.borders, [], []);
+    }
+}
+
+function envUpdate() {
+    if (running) {
+        updateCars();
     }
 
     prevBestCar = bestCar;
@@ -91,14 +103,15 @@ function envUpdate(time, isSinglePlayer) {
     if (stopCond) {
         if (running)
             socket.emit("crash", "");
-        running = false;
     }
 
     roadCanvas.height = window.innerHeight;
     NNCanvas.height = window.innerHeight;
 
     roadCtx.save();
+}
 
+function drawEnv(time, isSinglePlayer) {
     // Move camera based on best car
     roadCtx.translate(0, -bestCar.y + roadCanvas.height * 0.7);
 

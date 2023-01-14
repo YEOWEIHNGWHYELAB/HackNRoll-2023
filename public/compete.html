@@ -13,6 +13,7 @@
     <script src="js/road.js"></script>
     <script src="js/controls.js"></script>
     <script src="js/car.js"></script>
+    <script src="js/chat.js"></script>
     <script src="js/storage.js"></script>
     <script src="js/compete-env.js"></script>
     <script src="js/socket-handler.js"></script>
@@ -23,18 +24,25 @@
     <canvas id="roadCanvas"></canvas>
 
     <div id="verticalButtons">
-        <span id="btnSave" onclick="saveBrain()">💾</span>
-        <span id="btnDel" onclick="discardBrain()">🗑️</span>
-        <span id="btnReset" onclick="resetTraining(false)">🔁</span>
-        <span id="btnExport" onclick="exportBrain()">📥</span>
+        <span id="btnReady" onclick="toggleReady()" data-ready="0">✔️</span>
         <input type="file" id="btnImport" onchange="importBrain(event)" />
         <label for="btnImport" id="btnImportLbl">📤</label>
     </div>
 
     <canvas id="NNCanvas"></canvas>
 
+    <div id="chatWindow">
+        <div id="chatMessagesContainer">
+            <ul id="chatMessages"></ul>
+        </div>
+        <div id="chatInputContainer">
+            <input type="text" id="chatInput" autocomplete="off" />
+            <input id="chatButton" type="button" value="Send" onclick="chatSend()" />
+        </div>
+    </div>
+
     <div id="divScores">
-        <div id="txtPopup">All agents have stopped, game has ended</div>
+        <div id="txtScores">All agents have stopped, game has ended</div>
         <div id="divScoreboard">
             <table id="tblScores">
             </table>

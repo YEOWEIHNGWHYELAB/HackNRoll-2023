@@ -45,15 +45,17 @@ class Sensor {
             }
         }
 
-        // Sensor collision with traffic Agents
-        for (let i = 0; i < agentTraffic.length; i++) {
-            const poly = agentTraffic[i].polygon;
+        if (isCollideAgentTraffic) {
+            // Sensor collision with traffic Agents
+            for (let i = 0; i < agentTraffic.length; i++) {
+                const poly = agentTraffic[i].polygon;
 
-            for (let j = 0; j < poly.length; j++) {
-                const value = getIntersection(ray[0], ray[1], poly[j], poly[(j + 1) % poly.length]);
+                for (let j = 0; j < poly.length; j++) {
+                    const value = getIntersection(ray[0], ray[1], poly[j], poly[(j + 1) % poly.length]);
 
-                if (value) {
-                    touches.push(value);
+                    if (value) {
+                        touches.push(value);
+                    }
                 }
             }
         }

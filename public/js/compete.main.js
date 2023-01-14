@@ -22,16 +22,17 @@ function getCookie(cname) {
 
 /**
  * Updates NPC & agents and redraws the canvas
- * @param {number} time 
+ * @param {number} time
  */
 const animate = (time) => {
     // Update traffic NPC and agents
-    envUpdate(time, false);
+    envUpdate();
+    drawEnv(time, false);
 
     data = {
-        "x": bestCar.x,
-        "y": bestCar.y,
-        "a": bestCar.angle,
+        x: bestCar.x,
+        y: bestCar.y,
+        a: bestCar.angle,
     };
 
     emitAgentData(getCookie("username"), data);
@@ -41,10 +42,13 @@ const animate = (time) => {
 window.onload = () => {
     let urlParams = new URLSearchParams(window.location.search);
     roomID = urlParams.get("roomID");
+    username = getCookie("username");
 
-    joinRoom(roomID, getCookie("username"));
-    emitNew(getCookie("username"));
+    initChatDOM();
+    joinRoom(roomID, username);
+    emitNew(username);
     initGlobals();
-    resetCanvas(1);
+    resetCanvas(1, true);
+    updateCars();
     animate();
 };

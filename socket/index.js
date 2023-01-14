@@ -3,32 +3,33 @@ const db = require("../db");
 const TRAFFIC_GEN_THRESHOLD = 800;
 const TRAFFIC_Y_GAP = 200;
 
-let userRoomMap = new Map();
+let socketRoomMap = new Map();
 let socketUserMap = new Map();
 let roomInfo = {};
 
 setInterval(() => {
     for (const roomID in roomInfo) {
-        if (roomInfo[roomID]["traffic"].length > 1) {
+        if (roomInfo[roomID]["traffic"].length > 1 && roomInfo[roomID]["running"]) {
             roomInfo[roomID]["trafficOffset"] -= 1;
         }
     }
-}, 8.33);
+}, 16.667);
 
 function socketHandling(io) {
     io.on("connection", (socket) => {
-        const sessionID = socket.id;
+        const socketID = socket.id;
 
         // When a user disconnect, we send an icmp echo request so all the
         // clients that are still online is known
         socket.on("disconnect", function () {
             try {
-                let roomID = userRoomMap.get(sessionID),
-                    username = socketUserMap.get(sessionID);
+                let roomID = socketRoomMap.get(socketID),
+                    username = socketUserMap.get(socketID);
 
                 removeUserFromRoom(roomID, username);
-                socket.leave(userRoomMap.get(sessionID));
-                userRoomMap.delete(sessionID);
+                socket.leave(socketRoomMap.get(socketID));
+                socket.to(socketRoomMap.get(socketID)).emit("chat_message", socketUserMap.get(socketID) + " has left");
+                socketRoomMap.delete(socketID);
 
                 io.to(roomID).emit("agent_left", username);
             } catch (e) {
@@ -39,13 +40,14 @@ function socketHandling(io) {
 
         // On receiving of join room by client, check if it is already an existing user
         socket.on("join_room", (roomID, username) => {
-            socketUserMap.set(sessionID, username);
+            socketUserMap.set(socketID, username);
 
             // Handling the case when it leaves a room its in and join another room
-            if (userRoomMap.has(sessionID)) {
+            if (socketRoomMap.has(socketID)) {
                 try {
-                    socket.leave(userRoomMap.get(sessionID));
-                    userRoomMap.delete(sessionID);
+                    socket.leave(socketRoomMap.get(socketID));
+                    socket.to(roomID).emit("chat_message", username + " has left");
+                    socketRoomMap.delete(socketID);
                 } catch (e) {
                     console.error("[Error]", "Leaving room: ", e);
                     socket.emit("error", "couldnt perform requested action");
@@ -57,9 +59,11 @@ function socketHandling(io) {
 
                 if (res) {
                     socket.join(roomID);
-                    userRoomMap.set(sessionID, roomID);
-                    io.to(roomID).emit("agent_refresh", roomInfo[roomID]["users"]);
+                    socket.to(roomID).emit("chat_message", username + " has joined");
+                    socketRoomMap.set(socketID, roomID);
+                    io.to(roomID).emit("agent_refresh", [...roomInfo[roomID]["users"]]);
                     socket.emit("init_traffic", {
+                        type: "init",
                         traffic: roomInfo[roomID]["traffic"],
                         trafficOffset: roomInfo[roomID]["trafficOffset"],
                     });
@@ -68,36 +72,69 @@ function socketHandling(io) {
                 }
             } catch (e) {
                 console.error("[Error]", "Joining room: ", e);
-                socket.emit("error", "couldnt perform requested action");
+                socket.emit("error", e.message);
             }
+        });
+
+        socket.on("agent_ready", () => {
+            let roomID = socketRoomMap.get(socketID),
+                username = socketUserMap.get(socketID);
+            if (roomID !== undefined)
+                roomInfo[roomID]["readyUsers"].add(username);
+            // console.log(roomInfo[roomID]["readyUsers"]);
+
+            try {
+                const users = roomInfo[roomID]["users"],
+                    rdyUsers = roomInfo[roomID]["readyUsers"];
+                
+                if ([...users].sort().join() === [...rdyUsers].sort().join()) {
+                    io.to(roomID).emit("game_start");
+                    roomInfo[roomID]["running"] = true;
+                }
+            } catch (e) {
+                console.log("error starting...", e);
+            }
+        });
+
+        socket.on("agent_not_ready", () => {
+            let roomID = socketRoomMap.get(socketID),
+                username = socketUserMap.get(socketID);
+            if (roomID !== undefined)
+                roomInfo[roomID]["readyUsers"].delete(username);
+            // console.log(roomInfo[roomID]["readyUsers"]);
         });
 
         // Broadcast the agent's position and orientation to other players
         socket.on("agent_data", (msg) => {
-            let roomID = userRoomMap.get(sessionID);
+            let roomID = socketRoomMap.get(socketID);
             if (roomID !== undefined)
                 handleAgentMovement(io, roomID, msg);
             socket.to(roomID).emit("agent_data", msg);
         });
 
-        socket.on("crash", () => {
-            let roomID = userRoomMap.get(sessionID),
-                username = socketUserMap.get(sessionID);
+        // On the receiving of chat message
+        socket.on("chat_message", (msg) => {
+            io.to(socketRoomMap.get(socketID)).emit("chat_message", socketUserMap.get(socketID), msg);
+        });
 
-            if (roomID in roomInfo) {
+        socket.on("crash", async () => {
+            let roomID = socketRoomMap.get(socketID),
+                username = socketUserMap.get(socketID);
+
+            if (roomID in roomInfo && username in roomInfo[roomID]["agents"]) {
                 roomInfo[roomID]["agents"][username]["crashed"] = true;
 
                 if (checkGameEnded(roomID)) {
                     const scores = getFinalScores(roomID);
                     io.to(roomID).emit("ended", scores);
+
+                    io.in(roomID).disconnectSockets(true);
                     delete roomInfo[roomID];
-                    console.log(`Game in room '${roomID}' has ended`);
                 }
             }
         });
     });
 }
-
 
 /**
  * Checks whether all agents in a room have crashed
@@ -130,7 +167,6 @@ function getFinalScores(roomID) {
     return scores;
 }
 
-
 /**
  * 
  * @param {string} roomID
@@ -149,13 +185,13 @@ function handleAgentMovement(io, roomID, msg) {
     let newTraffic = generateTraffic(roomID, 2);
     if (newTraffic.length > 0) {
         io.to(roomID).emit("new_traffic", {
+            type: "new",
             traffic: newTraffic,
             trafficOffset: roomInfo[roomID]["trafficOffset"],
         });
     }
 
 }
-
 
 /**
  * 
@@ -168,17 +204,20 @@ function addUserToRoom(roomID, username) {
         roomInfo[roomID] = {
             "roomID": roomID,
             "userCount": 0,
-            "users": [],
+            "maxUserCount": 4,
+            "users": new Set(),
             "agents": {},
             "laneCount": 4,
             "traffic": [],
             "trafficOffset": 0,
+            "readyUsers": new Set(),
+            "running": false,
         };
     }
 
-    if (roomInfo[roomID]["userCount"] < roomInfo[roomID]["laneCount"]) {
+    if (roomInfo[roomID]["userCount"] < roomInfo[roomID]["maxUserCount"]) {
         roomInfo[roomID]["userCount"]++;
-        roomInfo[roomID]["users"].push(username);
+        roomInfo[roomID]["users"].add(username);
         roomInfo[roomID]["agents"][username] = {
             "pos": [0, 0],
             "crashed": false,
@@ -189,7 +228,6 @@ function addUserToRoom(roomID, username) {
     }
 }
 
-
 /**
  * 
  * @param {string} roomID 
@@ -198,14 +236,13 @@ function addUserToRoom(roomID, username) {
 function removeUserFromRoom(roomID, username) {
     if (roomInfo[roomID]) {
         roomInfo[roomID]["userCount"]--;
-        roomInfo[roomID]["users"] = roomInfo[roomID]["users"].filter(u => u !== username);
+        roomInfo[roomID]["users"].delete(username);
         delete roomInfo[roomID]["agents"][username];
 
         if (roomInfo[roomID]["userCount"] == 0)
             delete roomInfo[roomID];
     }
 }
-
 
 /**
  * 
