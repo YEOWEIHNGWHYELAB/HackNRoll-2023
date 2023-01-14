@@ -19,8 +19,6 @@ app.get("/compete", (req, res) => {
 });
 
 io.on("connection", (socket) => {
-    // handshake.headers[x-forwarded-for] for public IP if available
-    // conn.remoteAddress for private IP
     let clientIP = socket.handshake.headers["x-forwarded-for"] || socket.conn.remoteAddress.split(":")[3];
     console.log(`User from ${clientIP} connected`);
 });
