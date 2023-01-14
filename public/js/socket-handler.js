@@ -96,6 +96,7 @@ function showScores(scores) {
 
 function gameStart() {
     running = true;
+    startTime = new Date().getTime();
 }
 
 function error(msg) {
