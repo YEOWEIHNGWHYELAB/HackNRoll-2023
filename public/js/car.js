@@ -222,7 +222,13 @@ class Car {
     draw(ctx, drawSensor = false) {
         if (this.username && this.username != "") {
             ctx.textAlign = "center";
-            ctx.fillText(this.username, this.x, this.y + (this.height));
+            if (this.username != getCookie("username")) {
+                ctx.fillStyle = 'blue';
+                ctx.fillText(this.username, this.x, this.y + (this.height));
+            } else {
+                ctx.fillStyle = 'red';
+                ctx.fillText("YOU", this.x, this.y + (this.height));
+            }
         }
 
         if (this.sensor && drawSensor) {
