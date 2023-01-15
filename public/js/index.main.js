@@ -71,3 +71,29 @@ const login = () => {
             console.error("Error:", error);
         });
 };
+
+fetch("/leaderboard", {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(),
+})
+    .then((response) => response.json())
+    .then((data) => {
+        let leaderboardTable = document.querySelector("#leaderboardTable");
+
+        for (entry of data) {
+            var tr = document.createElement('tr');
+            let td1 = document.createElement('td');
+            let td2 = document.createElement('td');
+
+            td1.innerHTML = entry["username"];
+            td2.innerHTML  = entry["score_value"];
+            tr.appendChild(td1);
+            tr.appendChild(td2);
+
+            leaderboardTable.appendChild(tr);
+        }
+    })
+    .catch((error) => {
+        console.error("Error:", error);
+    });

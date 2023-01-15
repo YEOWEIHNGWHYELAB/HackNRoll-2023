@@ -21,6 +21,7 @@ app.use(cookieParser());
 // routes
 app.use(routes.pages);
 app.use(routes.user);
+app.use(routes.leaderboard);
 
 // Socket Handling
 socket.socketHandling(io);

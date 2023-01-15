@@ -163,6 +163,15 @@ const uploadScores = (roomID, agents) => {
     }
 };
 
+/**
+ * Query the leaderboard entries from db
+ */
+const queryLeaderboard = (onSuccess, onError) => {
+    let query = "SELECT username, score_value FROM \"2023\".\"score\" ORDER BY score_value DESC LIMIT 100";
+    
+    runQuery(query, [], onSuccess, onError);
+};
+
 module.exports = {
-    initDB, register, login, uploadScores
+    initDB, register, login, uploadScores, queryLeaderboard
 };

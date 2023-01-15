@@ -1,5 +1,5 @@
 const db = require("../db");
-const spawn = require("child_process").spawn;
+//const spawn = require("child_process").spawn;
 
 const TRAFFIC_GEN_THRESHOLD = 800;
 const TRAFFIC_Y_GAP = 200;
@@ -20,11 +20,11 @@ function socketHandling(io) {
     io.on("connection", (socket) => {
         const socketID = socket.id;
 
-        let pythonProcess = spawn("python", ["-u", "./python/controller.py"]);
-        
-        pythonProcess.stdout.on("data", (data) => {
-            io.to(socketID).emit("agent_action", data.toString().trim());
-        });
+        //let pythonProcess = spawn("python", ["-u", "./python/controller.py"]);
+
+        // pythonProcess.stdout.on("data", (data) => {
+        //     io.to(socketID).emit("agent_action", data.toString().trim());
+        // });
 
         // When a user disconnect, we send an icmp echo request so all the
         // clients that are still online is known
@@ -96,7 +96,7 @@ function socketHandling(io) {
             try {
                 const users = roomInfo[roomID]["users"],
                     rdyUsers = roomInfo[roomID]["readyUsers"];
-                
+
                 if ([...users].sort().join() === [...rdyUsers].sort().join()) {
                     io.to(roomID).emit("game_start");
                     roomInfo[roomID]["running"] = true;
@@ -127,7 +127,7 @@ function socketHandling(io) {
         });
 
         socket.on("agent_state_reward", (agentStringState) => {
-            pythonProcess.stdin.write(agentStringState + "\n");
+            //pythonProcess.stdin.write(agentStringState + "\n");
         });
 
         socket.on("crash", async () => {
