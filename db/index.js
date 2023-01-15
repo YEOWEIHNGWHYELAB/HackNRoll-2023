@@ -62,6 +62,7 @@ const initDB = () => {
             username VARCHAR(20) NOT NULL,
             score_value INT NOT NULL DEFAULT 0,
             room_id VARCHAR(40) NOT NULL,
+            lane_count INT NOT NULL,
             PRIMARY KEY ("score_id"),
             CONSTRAINT fk_user_id
                 FOREIGN KEY("user_id")
@@ -130,7 +131,7 @@ const login = (username, password, onSuccess, onError) => {
  * @param {string} roomID Room ID of game that finished
  * @param {object} agents Agent object, contains keys "pos" and "crashed"
  */
-const uploadScores = (roomID, agents) => {
+const uploadScores = (roomID, agents, laneCount) => {
     let queryDDLValues = [],
         queryValues = [],
         varCount = 0;
@@ -142,23 +143,26 @@ const uploadScores = (roomID, agents) => {
             (SELECT user_id FROM "2023"."user" WHERE username=$${varCount + 1}),
             $${varCount + 1},
             $${varCount + 2},
-            $${varCount + 3}
+            $${varCount + 3},
+            $${varCount + 4}
         )`);
 
         queryValues.push(user);
         queryValues.push(score);
         queryValues.push(roomID);
+        queryValues.push(laneCount);
 
         // increment varCount as it's used for the $i variables
-        varCount += 3;
+        varCount += 4;
     }
 
     if (queryValues.length > 0) {
         const scoreQuery = `
             INSERT INTO "2023"."score"(
-                user_id, username, score_value, room_id
+                user_id, username, score_value, room_id, lane_count
             )
             VALUES ${queryDDLValues.join(",")};`;
+
         runQuery(scoreQuery, queryValues);
     }
 };
@@ -167,7 +171,7 @@ const uploadScores = (roomID, agents) => {
  * Query the leaderboard entries from db
  */
 const queryLeaderboard = (onSuccess, onError) => {
-    let query = "SELECT username, score_value FROM \"2023\".\"score\" ORDER BY score_value DESC LIMIT 100";
+    let query = "SELECT ms.username, lc.lane_count, ms.max_score FROM (SELECT username, MAX(score_value) AS max_score FROM \"2023\".score GROUP BY username ORDER BY max_score DESC LIMIT 100) AS ms INNER JOIN (SELECT lane_count, score_value FROM \"2023\".score) AS lc ON ms.max_score = lc.score_value";
     
     runQuery(query, [], onSuccess, onError);
 };

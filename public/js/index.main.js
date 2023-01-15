@@ -80,16 +80,20 @@ fetch("/leaderboard", {
     .then((response) => response.json())
     .then((data) => {
         let leaderboardTable = document.querySelector("#leaderboardTable");
-
+        console.log(data);
         for (entry of data) {
-            var tr = document.createElement('tr');
-            let td1 = document.createElement('td');
-            let td2 = document.createElement('td');
+            var tr = document.createElement("tr");
+            let td1 = document.createElement("td");
+            let td2 = document.createElement("td");
+            let td3 = document.createElement("td");
 
             td1.innerHTML = entry["username"];
-            td2.innerHTML  = entry["score_value"];
+            td2.innerHTML = entry["lane_count"];
+            td3.innerHTML = entry["max_score"];
+
             tr.appendChild(td1);
             tr.appendChild(td2);
+            tr.appendChild(td3);
 
             leaderboardTable.appendChild(tr);
         }

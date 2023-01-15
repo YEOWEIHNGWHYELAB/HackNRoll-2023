@@ -139,7 +139,7 @@ function socketHandling(io) {
                 roomInfo[roomID]["agents"][username]["crashed"] = true;
 
                 if (checkGameEnded(roomID)) {
-                    const scores = getFinalScores(roomID);
+                    const scores = getFinalScores(roomID, roomInfo[roomID]["laneCount"]);
                     io.to(roomID).emit("ended", scores);
 
                     io.in(roomID).disconnectSockets(true);
@@ -180,15 +180,16 @@ function checkGameEnded(roomID) {
  * @param {string} roomID 
  * @returns {object} All scores of the users
  */
-function getFinalScores(roomID) {
+function getFinalScores(roomID, laneCount) {
     let scores = {};
     let agents = roomInfo[roomID]["agents"];
 
     for (user in agents) {
-        scores[user] = Math.abs(Math.round(agents[user]["pos"][1]));
+        scores[user] = Math.abs(Math.round(agents[user]["pos"][1] / (laneCount)));
     }
 
-    db.uploadScores(roomID, agents);
+    db.uploadScores(roomID, agents, laneCount);
+
     return scores;
 }
 
