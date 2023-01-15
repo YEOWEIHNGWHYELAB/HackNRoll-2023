@@ -137,7 +137,7 @@ const uploadScores = (roomID, agents, laneCount) => {
         varCount = 0;
 
     for (user in agents) {
-        const score = Math.abs(Math.round(agents[user]["pos"][1]));
+        const score = Math.abs(Math.round(agents[user]["pos"][1] / laneCount));
 
         queryDDLValues.push(`(
             (SELECT user_id FROM "2023"."user" WHERE username=$${varCount + 1}),
@@ -171,7 +171,7 @@ const uploadScores = (roomID, agents, laneCount) => {
  * Query the leaderboard entries from db
  */
 const queryLeaderboard = (onSuccess, onError) => {
-    let query = "SELECT ms.username, lc.lane_count, ms.max_score FROM (SELECT username, MAX(score_value) AS max_score FROM \"2023\".score GROUP BY username ORDER BY max_score DESC LIMIT 100) AS ms INNER JOIN (SELECT lane_count, score_value FROM \"2023\".score) AS lc ON ms.max_score = lc.score_value";
+    let query = "SELECT DISTINCT ms.username, lc.lane_count, ms.max_score FROM (SELECT username, MAX(score_value) AS max_score FROM \"2023\".score GROUP BY username) AS ms INNER JOIN (SELECT lane_count, score_value FROM \"2023\".score) AS lc ON ms.max_score = lc.score_value ORDER BY max_score DESC LIMIT 100";
     
     runQuery(query, [], onSuccess, onError);
 };
