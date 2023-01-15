@@ -11,6 +11,7 @@ let running;
 let roadMinX;
 let roadMaxX;
 let isUsingDQN = false;
+let startTime = new Date().getTime();
 
 const initGlobals = (laneCount) => {
     // Window for Training Environment
@@ -40,7 +41,7 @@ const resetCanvas = (laneCount = 4) => {
         for (let i = 0; i < agentArr.length; i++) {
             agentArr[i].sensor = new Sensor(agentArr[i], JSON.parse(localStorage.getItem("bestBrain"))["levels"][0]["inputs"].length);
             agentArr[i].brain = JSON.parse(localStorage.getItem("bestBrain"));
-            
+
             // Mutate all agent's brain except first one
             if (i != 0) {
                 NeuralNetwork.mutate(agentArr[i].brain, 0.1);
@@ -86,9 +87,13 @@ function envUpdate() {
 
     // if all cars have stopped
     let stopCond = agentArr.every((agent) => agent.damaged);
-    if (stopCond) {
-        if (running)
+    let timeSinceStart = new Date().getTime() - startTime;
+
+    if (stopCond || timeSinceStart >= 30000) {
+        if (running) {
+            running = false;
             socket.emit("crash", "");
+        }
     }
 
     roadCanvas.height = window.innerHeight;
