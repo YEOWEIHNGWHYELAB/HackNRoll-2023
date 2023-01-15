@@ -1,9 +1,13 @@
 const { Telegraf } = require("telegraf");
-const bot = new Telegraf(process.env.TELEBOT_TOKEN);
+
+let bot;
 
 let subscribedIDs = [];
+let roomMailList = {};
 
 function initBot() {
+    bot = new Telegraf(process.env.TELEBOT_TOKEN);
+
     bot.start((ctx) => {
         ctx.reply("Welcome to WHYBEN bot");
     });
@@ -26,6 +30,39 @@ function initBot() {
         }
     });
 
+    bot.command("follow", (ctx) => {
+        let room = ctx.update.message.text.split(" ")[1];
+
+        if (roomMailList[room] == undefined)
+            roomMailList[room] = [];
+
+        if (roomMailList[room].length == 0 ||
+            !roomMailList[room].includes(ctx.chat.id)) {
+            roomMailList[room].push(ctx.chat.id);
+            ctx.reply(`You are now following room ${room}`);
+        }
+
+        else {
+            ctx.reply("You are already following this room");
+        }
+    });
+
+    bot.command("unfollow", (ctx) => {
+        let room = ctx.update.message.text.split(" ")[1];
+
+        if (roomMailList[room] == undefined ||
+            roomMailList[room].length == 0 ||
+            !roomMailList[room].includes(ctx.chat.id)) {
+            ctx.reply("You are not currently following this room");
+        }
+        else {
+            roomMailList[room] = roomMailList[room].filter((m) => m !== room);
+            ctx.reply(`You have unfollowed room ${room}`);
+        }
+    });
+
+
+
     bot.launch();
 }
 
@@ -44,11 +81,24 @@ function parseScores(scores) {
     return users.join("\n");
 }
 
-function broadcastScores(scores) {
-    scoresStr = parseScores(scores);
+function broadcastScores(roomID, scores) {
+    let scoresStr = parseScores(scores);
+    let sent = new Set();
 
     for (let chatID of subscribedIDs) {
-        bot.telegram.sendMessage(chatID, scoresStr);
+        if (!sent.has(chatID)) {
+            bot.telegram.sendMessage(chatID, scoresStr);
+            sent.add(chatID);
+        }
+    }
+
+    if (roomMailList[roomID] !== undefined) {
+        for (let chatID of roomMailList[roomID]) {
+            if (!sent.has(chatID)) {
+                bot.telegram.sendMessage(chatID, scoresStr);
+                sent.add(chatID);
+            }
+        }
     }
 }
 

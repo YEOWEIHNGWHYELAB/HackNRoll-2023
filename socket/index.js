@@ -145,7 +145,7 @@ function socketHandling(io) {
                     io.in(roomID).disconnectSockets(true);
                     delete roomInfo[roomID];
 
-                    telebot.broadcastScores(scores);
+                    telebot.broadcastScores(roomID, scores);
                 }
             }
         });
