@@ -1,4 +1,9 @@
 require("dotenv").config();
+
+// setup telebot
+const telebot = require("./telebot");
+telebot.initBot();
+
 const socket = require("./socket");
 const express = require("express");
 const app = express();

@@ -1,4 +1,5 @@
 const db = require("../db");
+const telebot = require("../telebot");
 //const spawn = require("child_process").spawn;
 
 const TRAFFIC_GEN_THRESHOLD = 800;
@@ -143,6 +144,8 @@ function socketHandling(io) {
 
                     io.in(roomID).disconnectSockets(true);
                     delete roomInfo[roomID];
+
+                    telebot.broadcastScores(scores);
                 }
             }
         });
